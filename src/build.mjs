@@ -4,6 +4,8 @@ const NODE_VERSIONS = ['14.0.0', '16.0.0', '17.0.1', '18.0.0'];
 const ELECTRON_VERSIONS = ['18.0.0', '19.0.0', '20.0.0', '21.0.0', '22.0.0'];
 
 export default async function build(libData) {
+    cd(libData.targetPath);
+
     for (const arch of ARCHS) {
         if (!libData.isNAN) {
             await $`npx prebuildify --strip --arch=${arch} --napi`;

@@ -55,6 +55,7 @@ async function getNewBuildVersion(packageName, baseVersion) {
 }
 
 export default async function patch(libData) {
+    cd(libData.targetPath);
     libData.isNAN = false;
 
     const packageJSONPath = path.join(libData.targetPath, 'package.json');

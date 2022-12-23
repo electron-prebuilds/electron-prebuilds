@@ -12,7 +12,7 @@ on:
 
 jobs:
   linux_prebuild:
-    name: Linux
+    name: linux
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -29,7 +29,79 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - run: yarn start
+      - run: yarn prebuild-lib
+        env:
+          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
+          LIB_REF: ${{ github.event.inputs.lib_ref }}
+
+  windows_prebuild:
+    name: windows
+    runs-on: windows-latest
+    needs: linux_prebuild
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+
+      - uses: actions/cache@v3
+        with:
+          path: libs
+          key: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn prebuild-lib
+        env:
+          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
+          LIB_REF: ${{ github.event.inputs.lib_ref }}
+
+  macos_prebuild:
+    name: macos
+    runs-on: macos-latest
+    needs: windows_prebuild
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+
+      - uses: actions/cache@v3
+        with:
+          path: libs
+          key: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn prebuild-lib
+        env:
+          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
+          LIB_REF: ${{ github.event.inputs.lib_ref }}
+
+  publish:
+    name: publish
+    runs-on: ubuntu-latest
+    needs: macos_prebuild
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+
+      - uses: actions/cache@v3
+        with:
+          path: libs
+          key: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn publish-lib
         env:
           LIB_SOURCE: ${{ github.event.inputs.lib_name }}
           LIB_REF: ${{ github.event.inputs.lib_ref }}

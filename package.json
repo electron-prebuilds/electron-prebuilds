@@ -7,10 +7,12 @@
     "email": "ozn.akn@gmail.com"
   },
   "scripts": {
-    "start": "yarn zx src/index.mjs"
+    "prebuild-lib": "yarn zx src/index.mjs",
+    "publish-lib": "cross-env LIB_PUBLISH=1 yarn zx src/index.mjs"
   },
   "dependencies": {},
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "readdirp": "^3.6.0",
     "rimraf": "^3.0.2",
     "zx": "^7.1.1"

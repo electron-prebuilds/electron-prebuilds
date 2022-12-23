@@ -7,13 +7,16 @@ const libData = {
     ref: process.env.LIB_REF,
 };
 
-const pipeline = [
+let pipeline = [
     'deps-installer',
     'clone',
     'patch',
     'build',
-    'publish',
-]
+];
+
+if (process.env.LIB_PUBLISH) {
+    pipeline = ['publish'];
+}
 
 const fns = (await Promise.all(pipeline.map(n => import(`./${n}.mjs`)))).map(({ default: fn }) => fn);
 for (const fn of fns) {
