@@ -61,7 +61,7 @@ export default async function patch(libData) {
     const packageJSON = require(packageJSONPath);
 
     const newPackageName = packageJSON['name'].split('/').at(-1);
-    packageJSON['name'] = `@electron-prebuilds/${newPackageName}`;
+    packageJSON['name'] = `@electron-prebuilds/${newPackageName}-test`;
 
     const buildVersion = await getNewBuildVersion(packageJSON['name'], packageJSON['version']);
     packageJSON['version'] = `${packageJSON['version']}-prebuild.${buildVersion}`;
