@@ -1,29 +1,73 @@
 const NAN_PACKAGE = '@electron-prebuilds/nan';
+const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
+const BINDINGS_VERSION = '*';
 
-export default async function patch(targetPath, libData) {
-    cd(targetPath);
+const NODE_GYP_BUILD_VERSION = '4.5.0';
 
-    let isNAN = false;
+const readdirp = require('readdirp');
 
-    const packageJSONPath = path.join(targetPath, 'package.json');
-    const packageJSON = require(packageJSONPath);
+async function patchIgnoreFile(targetPath) {
+    if (await fs.pathExists(targetPath)) {
+        const inputData = await fs.readFile(targetPath, 'utf8');
+        let output = '';
 
-    const newPackageName = packageJSON['name'].split('/').at(-1);
-    packageJSON['name'] = `@electron-prebuilds/${newPackageName}`;
+        for (let line of inputData.split('\n')) {
+            line = line.trim();
 
-    if (packageJSON['dependencies']) {
-        for (const key in packageJSON['dependencies']) {
-            if (key === 'nan') {
-                isNAN = true;
+            if (line.includes('prebuilds')) continue;
 
-                packageJSON['dependencies'][NAN_PACKAGE] = packageJSON['dependencies']['nan'];
-                delete packageJSON['dependencies']['nan'];
-            }
+            output += `${line}\n`;
+        }
+
+        await fs.writeFile(targetPath, output);
+    }
+}
+
+async function replaceBindingsImport(targetPath) {
+    for await (const entry of readdirp(targetPath, { fileFilter: '*.*js' })) {
+        let fileContent = await fs.readFile(entry.fullPath, 'utf-8');
+
+        if (fileContent.includes(`require('bindings')`) || fileContent.includes(`require("bindings")`)) {
+            fileContent = fileContent.replace(/require\('bindings'\)/g, `require('${BINDINGS_PACKAGE}')`);
+            fileContent = fileContent.replace(/require\("bindings"\)/g, `require('${BINDINGS_PACKAGE}')`);
+
+            await fs.writeFile(entry.fullPath, fileContent);
         }
     }
+}
 
-    if (isNAN) {
-        const gypfilePath = path.join(targetPath, 'binding.gyp');
+export default async function patch(libData) {
+    libData.isNAN = false;
+
+    const packageJSONPath = path.join(libData.targetPath, 'package.json');
+    const packageJSON = require(packageJSONPath);
+
+    libData.newPackageName = packageJSON['name'].split('/').at(-1);
+    packageJSON['name'] = `@electron-prebuilds/${libData.newPackageName}`;
+
+    delete packageJSON['binary'];
+
+    const { dependencies } = packageJSON;
+    if (dependencies['nan']) {
+        libData.isNAN = true;
+
+        dependencies[NAN_PACKAGE] = dependencies['nan'];
+        delete dependencies['nan'];
+    }
+    if (dependencies['bindings']) {
+        dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
+        delete dependencies['bindings'];
+
+        await replaceBindingsImport(libData.targetPath);
+    }
+
+    dependencies['node-gyp-build'] = NODE_GYP_BUILD_VERSION;
+    packageJSON['scripts'] = {
+        install: 'node-gyp-build'
+    };
+
+    if (libData.isNAN) {
+        const gypfilePath = path.join(libData.targetPath, 'binding.gyp');
         let gypfile = await fs.readFile(gypfilePath, 'utf8');
 
         gypfile = gypfile.replace(/require\('nan'\)/g, `require('${NAN_PACKAGE}')`);
@@ -32,13 +76,10 @@ export default async function patch(targetPath, libData) {
         await fs.writeFile(gypfilePath, gypfile);
     }
 
-    delete packageJSON['scripts'];
-    delete packageJSON['binary'];
-
     await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
     echo('package.json patched');
 
-    if (await fs.pathExists(path.join(targetPath, 'yarn.lock'))) {
+    if (await fs.pathExists(path.join(libData.targetPath, 'yarn.lock'))) {
         echo('yarn will be used');
         await $`yarn install --ignore-scripts`;
     } else {
@@ -46,28 +87,10 @@ export default async function patch(targetPath, libData) {
         await $`npm install --ignore-scripts`;
     }
 
-    const gitignorePath = path.join(targetPath, '.gitignore');
-    if (await fs.pathExists(gitignorePath)) {
-        const gitignore = await fs.readFile(gitignorePath, 'utf8');
-        let gitignoreResult = '';
-
-        for (let line of gitignore.split('\n')) {
-            line = line.trim();
-
-            if (line.includes('prebuilds')) continue;
-
-            gitignoreResult += `${line}\n`;
-        }
-
-        await fs.writeFile(gitignorePath, gitignoreResult);
-    }
+    await patchIgnoreFile(path.join(libData.targetPath, '.gitignore'))
+    await patchIgnoreFile(path.join(libData.targetPath, '.npmignore'))
 
     await $`git status`;
 
     echo('patch finished');
-    cd(process.cwd());
-
-    return {
-        isNAN,
-    }
 }
