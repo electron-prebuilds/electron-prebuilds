@@ -1,0 +1,17 @@
+{
+  "name": "electron-prebuilds",
+  "version": "0.1.0",
+  "license": "MIT",
+  "author": {
+    "name": "Ozan Akın",
+    "email": "ozn.akn@gmail.com"
+  },
+  "scripts": {
+    "start": "yarn zx src/index.mjs"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "rimraf": "^3.0.2",
+    "zx": "^7.1.1"
+  }
+}
