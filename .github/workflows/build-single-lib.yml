@@ -1,0 +1,35 @@
+name: Build prebuilds for single library
+
+on:
+  workflow_dispatch:
+    inputs:
+      lib_name:
+        description: "Library name"
+        required: true
+      lib_ref:
+        description: "Library ref (commit or tag)"
+        required: true
+
+jobs:
+  linux_prebuild:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+
+      - uses: actions/cache@v3
+        with:
+          path: libs
+          key: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn start
+        env:
+          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
+          LIB_REF: ${{ github.event.inputs.lib_ref }}

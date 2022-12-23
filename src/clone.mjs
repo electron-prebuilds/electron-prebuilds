@@ -3,7 +3,7 @@ const util = require('util');
 const rimraf = util.promisify(require('rimraf'));
 
 export default async function clone(libData) {
-    let { source, commit } = libData;
+    let { source, ref } = libData;
 
     let name = source.split('/').at(-1);
     if (name.endsWith('.git')) {
@@ -24,7 +24,7 @@ export default async function clone(libData) {
 
     await $`git init`;
     await $`git remote add origin ${source}`;
-    await $`git fetch origin --depth=1 ${commit}`;
+    await $`git fetch origin --depth=1 ${ref}`;
     await $`git reset --hard FETCH_HEAD`;
     await $`git submodule update --init --recursive --depth=1`;
 }
