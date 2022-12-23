@@ -34,16 +34,38 @@ async function replaceBindingsImport(targetPath) {
     }
 }
 
+async function getNewBuildVersion(packageName, baseVersion) {
+    try {
+        const { stdout } = await $`npm show ${packageName} time --json`;
+
+        const result = JSON.parse(stdout);
+
+        const versions = Object.keys(result)
+            .filter(k => k !== 'modified' && k !== 'created')
+            .filter(k => k.includes('-prebuild.'))
+            .sort((a, b) => result[a] > result[b] ? -1 : 1);
+
+        const searchText = `${baseVersion}-prebuild.`;
+        for (const version of versions) {
+            if (version.startsWith(searchText)) return Number(version.substring(searchText.length + 1)) + 1;
+        }
+    } catch {}
+
+    return 0;
+}
+
 export default async function patch(libData) {
     libData.isNAN = false;
 
     const packageJSONPath = path.join(libData.targetPath, 'package.json');
     const packageJSON = require(packageJSONPath);
 
-    libData.newPackageName = packageJSON['name'].split('/').at(-1);
-    packageJSON['name'] = `@electron-prebuilds/${libData.newPackageName}`;
+    const newPackageName = packageJSON['name'].split('/').at(-1);
+    packageJSON['name'] = `@electron-prebuilds/${newPackageName}`;
 
-    delete packageJSON['binary'];
+    const buildVersion = await getNewBuildVersion(packageJSON['name'], packageJSON['version']);
+    packageJSON['version'] = `${packageJSON['version']}-prebuild.${buildVersion}`;
+    console.log('decided version', packageJSON['version']);
 
     const { dependencies } = packageJSON;
     if (dependencies['nan']) {
@@ -68,7 +90,6 @@ export default async function patch(libData) {
     };
 
     await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
-    echo('package.json patched');
 
     if (libData.isNAN) {
         const gypfilePath = path.join(libData.targetPath, 'binding.gyp');
