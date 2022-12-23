@@ -2,8 +2,6 @@ const NAN_PACKAGE = '@electron-prebuilds/nan';
 const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
 const BINDINGS_VERSION = '*';
 
-const NODE_GYP_BUILD_VERSION = '4.5.0';
-
 const readdirp = require('readdirp');
 
 async function patchIgnoreFile(targetPath) {
@@ -49,10 +47,10 @@ export default async function patch(libData) {
 
     const { dependencies } = packageJSON;
     if (dependencies['nan']) {
-        libData.isNAN = true;
-
         dependencies[NAN_PACKAGE] = dependencies['nan'];
         delete dependencies['nan'];
+
+        libData.isNAN = true;
     }
     if (dependencies['bindings']) {
         dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
@@ -60,11 +58,17 @@ export default async function patch(libData) {
 
         await replaceBindingsImport(libData.targetPath);
     }
+    delete dependencies['prebuild-install'];
 
-    dependencies['node-gyp-build'] = NODE_GYP_BUILD_VERSION;
+    packageJSON['files'] = packageJSON['files'] || [];
+    packageJSON['files'].push('prebuilds/**');
+
     packageJSON['scripts'] = {
         install: 'node-gyp-build'
     };
+
+    await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
+    echo('package.json patched');
 
     if (libData.isNAN) {
         const gypfilePath = path.join(libData.targetPath, 'binding.gyp');
@@ -75,9 +79,6 @@ export default async function patch(libData) {
 
         await fs.writeFile(gypfilePath, gypfile);
     }
-
-    await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
-    echo('package.json patched');
 
     if (await fs.pathExists(path.join(libData.targetPath, 'yarn.lock'))) {
         echo('yarn will be used');
