@@ -25,7 +25,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: linux-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          key: linux-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
@@ -48,7 +48,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: windows-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          key: windows-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: macos-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          key: macos-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
@@ -100,19 +100,21 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: linux-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          key: linux-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
 
       - uses: actions/cache@v3
         with:
           path: libs
-          key: windows-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          key: windows-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
 
       - uses: actions/cache@v3
         with:
           path: libs
-          key: macos-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          key: macos-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
+
+      - run: ls
 
       - run: yarn publish-lib
         env:
@@ -128,7 +130,7 @@ jobs:
       - name: Clear cache
         uses: actions/github-script@v6
         env:
-          CACHE_KEY: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('package.json') }}-${{ hashFiles('yarn.lock') }}
+          CACHE_KEY: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
         with:
           script: |
             const caches = await github.rest.actions.getActionsCacheList({

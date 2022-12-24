@@ -5,17 +5,6 @@ const rimraf = util.promisify(require('rimraf'));
 export default async function clone(libData) {
     let { source, ref } = libData;
 
-    let name = source.split('/').at(-1);
-    if (name.endsWith('.git')) {
-        name = name.slice(0, -4);
-    }
-
-    if (!source.startsWith('http') || !source.startsWith('git@')) {
-        source = `https://github.com/${source}`;
-    }
-
-    libData.targetPath = path.join(process.cwd(), 'libs', name);
-
     await fs.mkdir(libData.targetPath, { recursive: true });
     await rimraf(libData.targetPath);
     await fs.mkdir(libData.targetPath, { recursive: true });
