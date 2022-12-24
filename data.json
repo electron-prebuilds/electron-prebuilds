@@ -3,5 +3,25 @@
         "source": "m4heshd/better-sqlite3-multiple-ciphers",
         "nan": true,
         "ref": "02eb7891f2a6535a30cfbe34bf138aba0f5d47c2"
+    },
+    {
+        "source": "stackgl/headless-gl",
+        "nan": true,
+        "ref": "fc01c03c43d244333fcf831c9fc2a7fe97247b96",
+        "deps": {
+            "linux": [
+                "xutils-dev",
+                "libxi-dev",
+                "libxxf86vm-dev",
+                "x11proto-xf86vidmode-dev",
+                "mesa-utils",
+                "xvfb",
+                "libgl1-mesa-dri",
+                "libglapi-mesa",
+                "libosmesa6",
+                "musl-dev",
+                "libgl1-mesa-dev"
+            ]
+        }
     }
 ]
