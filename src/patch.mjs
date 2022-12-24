@@ -1,6 +1,8 @@
 const NAN_PACKAGE = '@electron-prebuilds/nan';
-// const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
-// const BINDINGS_VERSION = '*';
+const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
+const BINDINGS_VERSION = '*';
+
+const NODE_GYP_BUILD_VERSION = '4.5.0';
 
 async function patchIgnoreFile(targetPath) {
     if (await fs.pathExists(targetPath)) {
@@ -56,11 +58,11 @@ export default async function patch(libData) {
         dependencies[NAN_PACKAGE] = dependencies['nan'];
         delete dependencies['nan'];
     }
-    // TODO: bindings
-    // if (dependencies['bindings']) {
-    //     dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
-    //     delete dependencies['bindings'];
-    // }
+    if (dependencies['bindings']) {
+        dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
+        delete dependencies['bindings'];
+    }
+    dependencies['node-gyp-build'] = dependencies['node-gyp-build'] || NODE_GYP_BUILD_VERSION;
     delete dependencies['prebuild-install'];
 
     packageJSON['files'] = packageJSON['files'] || [];
