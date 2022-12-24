@@ -1,7 +1,6 @@
 function findLibData(libName) {
     const data = require(path.join(process.cwd(), 'data.json'));
     for (const libData of data) {
-        if (libData.source === libName) return libData;
         if (!libName.includes('/') && libData.source.endsWith(`/${libName}`)) return libData;
     }
 
