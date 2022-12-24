@@ -7,10 +7,10 @@ export default async function build(libData) {
     cd(libData.targetPath);
 
     for (const arch of ARCHS) {
-        if (!libData.isNAN) {
-            await $`npx prebuildify --strip --arch=${arch} --napi`;
-        } else {
+        if (libData.nan) {
             await $`npx prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
+        } else {
+            await $`npx prebuildify --strip --arch=${arch} --napi`;
         }
     }
 

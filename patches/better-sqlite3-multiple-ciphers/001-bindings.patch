@@ -1,0 +1,13 @@
+diff --git a/lib/database.js b/lib/database.js
+index aea774d..1fe6a5d 100644
+--- a/lib/database.js
++++ b/lib/database.js
+@@ -45,7 +45,7 @@ function Database(filenameGiven, options) {
+ 	// Load the native addon
+ 	let addon;
+ 	if (nativeBindingPath == null) {
+-		addon = DEFAULT_ADDON || (DEFAULT_ADDON = require('bindings')('better_sqlite3.node'));
++		addon = DEFAULT_ADDON || (DEFAULT_ADDON = require('node-gyp-build')(path.dirname(__dirname)));
+ 	} else {
+ 		addon = require(path.resolve(nativeBindingPath).replace(/(\.node)?$/, '.node'));
+ 	}

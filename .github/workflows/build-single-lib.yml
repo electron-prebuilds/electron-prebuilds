@@ -6,9 +6,6 @@ on:
       lib_name:
         description: "Library name"
         required: true
-      lib_ref:
-        description: "Library ref (commit or tag)"
-        required: true
 
 jobs:
   linux_prebuild:
@@ -25,14 +22,13 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: linux-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          key: linux-${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
       - run: yarn prebuild-lib
         env:
-          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
-          LIB_REF: ${{ github.event.inputs.lib_ref }}
+          LIB_NAME: ${{ github.event.inputs.lib_name }}
 
   windows_prebuild:
     name: windows
@@ -48,14 +44,13 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: windows-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          key: windows-${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
       - run: yarn prebuild-lib
         env:
-          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
-          LIB_REF: ${{ github.event.inputs.lib_ref }}
+          LIB_NAME: ${{ github.event.inputs.lib_name }}
 
   macos_prebuild:
     name: macos
@@ -71,14 +66,13 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: macos-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          key: macos-${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
       - run: yarn prebuild-lib
         env:
-          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
-          LIB_REF: ${{ github.event.inputs.lib_ref }}
+          LIB_NAME: ${{ github.event.inputs.lib_name }}
 
   publish:
     name: publish
@@ -100,26 +94,23 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: libs
-          key: linux-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          key: linux-${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
 
       - uses: actions/cache@v3
         with:
           path: libs
-          key: windows-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          key: windows-${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
 
       - uses: actions/cache@v3
         with:
           path: libs
-          key: macos-${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          key: macos-${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
 
       - run: yarn install --frozen-lockfile
 
-      - run: ls
-
       - run: yarn publish-lib
         env:
-          LIB_SOURCE: ${{ github.event.inputs.lib_name }}
-          LIB_REF: ${{ github.event.inputs.lib_ref }}
+          LIB_NAME: ${{ github.event.inputs.lib_name }}
 
   clear_cache:
     runs-on: ubuntu-latest
@@ -130,7 +121,7 @@ jobs:
       - name: Clear cache
         uses: actions/github-script@v6
         env:
-          CACHE_KEY: ${{ github.event.inputs.lib_name }}-${{ github.event.inputs.lib_ref }}-${{ hashFiles('**/package.json') }}
+          CACHE_KEY: ${{ github.event.inputs.lib_name }}-${{ hashFiles('**/package.json') }}
         with:
           script: |
             const caches = await github.rest.actions.getActionsCacheList({

@@ -1,12 +1,17 @@
-if (!process.env.LIB_SOURCE || !process.env.LIB_REF) {
-    throw new Error('LIB_SOURCE and LIB_REF must be set');
+function findLibData(libName) {
+    const data = require(path.join(process.cwd(), 'data.json'));
+    for (const libData of data) {
+        if (libData.source === libName) return libData;
+    }
+
+    throw new Error('Library not found');
 }
 
-const libData = {
-    source: process.env.LIB_SOURCE,
-    ref: process.env.LIB_REF,
-};
+if (!process.env.LIB_NAME) {
+    throw new Error('LIB_NAME must be set');
+}
 
+const libData = findLibData(process.env.LIB_NAME);
 libData.name = libData.source.split('/').at(-1);
 if (libData.name.endsWith('.git')) {
     libData.name = libData.name.slice(0, -4);
@@ -29,10 +34,3 @@ const fns = (await Promise.all(pipeline.map(n => import(`./${n}.mjs`)))).map(({ 
 for (const fn of fns) {
     await fn(libData);
 }
-
-// const data = require(path.join(process.cwd(), 'data.json'));
-// for (const libData of data) {
-//     for (const fn of fns) {
-//         await fn(libData);
-//     }
-// }
