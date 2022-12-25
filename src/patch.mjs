@@ -1,3 +1,5 @@
+const readdirp = require('readdirp');
+
 const NAN_PACKAGE = '@electron-prebuilds/nan';
 const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
 const BINDINGS_VERSION = '*';
@@ -18,6 +20,64 @@ async function patchIgnoreFile(targetPath) {
         }
 
         await fs.writeFile(targetPath, output);
+    }
+}
+
+async function patchBindingsRequire(libData) {
+    for await (const entry of readdirp(libData.targetPath, { fileFilter: '*.*js' })) {
+        let fileContent = await fs.readFile(entry.fullPath, 'utf-8');
+
+        if (fileContent.includes(`require('bindings')`) || fileContent.includes(`require("bindings")`)) {
+            fileContent = fileContent.replace(/require\('bindings'\)/g, `require('${BINDINGS_PACKAGE}')`);
+            fileContent = fileContent.replace(/require\("bindings"\)/g, `require('${BINDINGS_PACKAGE}')`);
+
+            await fs.writeFile(entry.fullPath, fileContent);
+        }
+    }
+}
+
+async function patchPackageJSON(libData) {
+    const packageJSONPath = path.join(libData.targetPath, 'package.json');
+    const packageJSON = require(packageJSONPath);
+
+    packageJSON['name'] = `@electron-prebuilds/${libData.name}-test`;
+
+    const buildVersion = await getNewBuildVersion(packageJSON['name'], packageJSON['version']);
+    packageJSON['version'] = `${packageJSON['version']}-prebuild.${buildVersion}`;
+    console.log('decided version', packageJSON['version']);
+
+    const { dependencies } = packageJSON;
+    if (dependencies['nan']) {
+        dependencies[NAN_PACKAGE] = dependencies['nan'];
+        delete dependencies['nan'];
+    }
+    if (dependencies['bindings']) {
+        dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
+        delete dependencies['bindings'];
+    }
+    dependencies['node-gyp-build'] = dependencies['node-gyp-build'] || NODE_GYP_BUILD_VERSION;
+    delete dependencies['prebuild-install'];
+
+    packageJSON['files'] = packageJSON['files'] || [];
+    packageJSON['files'].push('prebuilds/**');
+
+    packageJSON['scripts'] = {
+        install: 'node-gyp-build'
+    };
+
+    await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
+}
+
+async function patchGypFile(libData) {
+    if (libData.nan) {
+        const gypfilePath = path.join(libData.targetPath, 'binding.gyp');
+        let gypfile = await fs.readFile(gypfilePath, 'utf8');
+
+        gypfile = gypfile.replace(/require\('nan'\)/g, `require('${NAN_PACKAGE}')`);
+        gypfile = gypfile.replace(/require\("nan"\)/g, `require("${NAN_PACKAGE}")`);
+        gypfile = gypfile.replace(/require\(`nan`\)/g, `require(\`${NAN_PACKAGE}\`)`);
+
+        await fs.writeFile(gypfilePath, gypfile);
     }
 }
 
@@ -44,48 +104,16 @@ async function getNewBuildVersion(packageName, baseVersion) {
 export default async function patch(libData) {
     cd(libData.targetPath);
 
-    const packageJSONPath = path.join(libData.targetPath, 'package.json');
-    const packageJSON = require(packageJSONPath);
+    await patchPackageJSON(libData);
+    await patchBindingsRequire(libData);
+    await patchGypFile(libData);
 
-    packageJSON['name'] = `@electron-prebuilds/${packageJSON['name'].split('/').at(-1)}-test`;
+    await patchIgnoreFile(path.join(libData.targetPath, '.gitignore'))
+    await patchIgnoreFile(path.join(libData.targetPath, '.npmignore'))
 
-    const buildVersion = await getNewBuildVersion(packageJSON['name'], packageJSON['version']);
-    packageJSON['version'] = `${packageJSON['version']}-prebuild.${buildVersion}`;
-    console.log('decided version', packageJSON['version']);
-
-    const { dependencies } = packageJSON;
-    if (dependencies['nan']) {
-        dependencies[NAN_PACKAGE] = dependencies['nan'];
-        delete dependencies['nan'];
+    if (await fs.pathExists(path.join(process.cwd(), `patches/${libData.name}`))) {
+        await $`git apply ../../patches/${libData.name}/*.patch`;
     }
-    if (dependencies['bindings']) {
-        dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
-        delete dependencies['bindings'];
-    }
-    dependencies['node-gyp-build'] = dependencies['node-gyp-build'] || NODE_GYP_BUILD_VERSION;
-    delete dependencies['prebuild-install'];
-
-    packageJSON['files'] = packageJSON['files'] || [];
-    packageJSON['files'].push('prebuilds/**');
-
-    packageJSON['scripts'] = {
-        install: 'node-gyp-build'
-    };
-
-    await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
-
-    if (libData.nan) {
-        const gypfilePath = path.join(libData.targetPath, 'binding.gyp');
-        let gypfile = await fs.readFile(gypfilePath, 'utf8');
-
-        gypfile = gypfile.replace(/require\('nan'\)/g, `require('${NAN_PACKAGE}')`);
-        gypfile = gypfile.replace(/require\("nan"\)/g, `require("${NAN_PACKAGE}")`);
-        gypfile = gypfile.replace(/require\(`nan`\)/g, `require(\`${NAN_PACKAGE}\`)`);
-
-        await fs.writeFile(gypfilePath, gypfile);
-    }
-
-    await $`git apply ../../patches/${libData.name}/*.patch`;
 
     if (await fs.pathExists(path.join(libData.targetPath, 'yarn.lock'))) {
         echo('yarn will be used');
@@ -94,9 +122,6 @@ export default async function patch(libData) {
         echo('npm will be used');
         await $`npm install --ignore-scripts`;
     }
-
-    await patchIgnoreFile(path.join(libData.targetPath, '.gitignore'))
-    await patchIgnoreFile(path.join(libData.targetPath, '.npmignore'))
 
     await $`git status`;
 
