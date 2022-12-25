@@ -36,6 +36,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           path: downloaded-lib/prebuilds/**/*.node
+          name: prebuilds
 
   publish:
     name: publish
@@ -57,10 +58,9 @@ jobs:
           PIPELINE: clone
 
       - uses: actions/download-artifact@v3
-
-      - run: ls
-      - run: ls downloaded-lib
-      - run: ls downloaded-lib/prebuilds
+        with:
+          name: prebuilds
+          path: downloaded-lib/prebuilds/
 
       - run: yarn run pipeline
         env:
