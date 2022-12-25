@@ -115,15 +115,5 @@ export default async function patch(libData) {
         await $`git apply ../../patches/${libData.name}/*.patch`;
     }
 
-    if (await fs.pathExists(path.join(libData.targetPath, 'yarn.lock'))) {
-        echo('yarn will be used');
-        await $`yarn install --ignore-scripts`;
-    } else {
-        echo('npm will be used');
-        await $`npm install --ignore-scripts`;
-    }
-
-    await $`git status`;
-
     echo('patch finished');
 }

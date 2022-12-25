@@ -58,6 +58,9 @@ jobs:
 
       - uses: actions/download-artifact@v3
 
+      - run: ls downloaded-lib
+      - run: ls downloaded-lib/prebuilds
+
       - run: yarn run pipeline
         env:
           LIB_NAME: ${{ github.event.inputs.lib_name }}
