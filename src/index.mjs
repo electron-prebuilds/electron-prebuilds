@@ -21,14 +21,20 @@ if (!libData.source.startsWith('http') || !libData.source.startsWith('git@')) {
     libData.source = `https://github.com/${libData.source}`;
 }
 
-libData.targetPath = path.join(process.cwd(), 'libs', libData.name);
+libData.targetPath = path.join(process.cwd(), 'downloaded-lib');
 
-let pipeline = process.env.LIB_PUBLISH ? ['publish'] : [
-    'deps-installer',
-    'clone',
-    'patch',
-    'build',
-];
+const pipeline = [];
+if (process.env.PIPELINE === 'clone-build') {
+    pipeline.push('deps-installer');
+    pipeline.push('clone');
+    pipeline.push('patch');
+    pipeline.push('build');
+} else if (process.env.PIPELINE === 'clone') {
+    pipeline.push('clone');
+    pipeline.push('patch');
+} else if (process.env.PIPELINE === 'publish') {
+    pipeline.push('publish');
+}
 
 const fns = (await Promise.all(pipeline.map(n => import(`./${n}.mjs`)))).map(({ default: fn }) => fn);
 for (const fn of fns) {

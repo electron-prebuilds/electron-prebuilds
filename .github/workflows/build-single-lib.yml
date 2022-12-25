@@ -8,9 +8,18 @@ on:
         required: true
 
 jobs:
-  linux_prebuild:
-    name: linux
-    runs-on: ubuntu-latest
+  prebuild:
+    name: ${{ matrix.target.name }}
+    runs-on: ${{ matrix.target.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          [
+            { os: "ubuntu-latest", name: "linux" },
+            { os: "windows-latest", name: "windows" },
+            { os: "macos-latest", name: "macos" },
+          ]
     steps:
       - uses: actions/checkout@v3
 
@@ -21,63 +30,19 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - run: yarn prebuild-lib
+      - run: yarn run pipeline
         env:
           LIB_NAME: ${{ github.event.inputs.lib_name }}
+          PIPELINE: clone-build
 
       - uses: actions/upload-artifact@v3
         with:
-          path: libs/${{ github.event.inputs.lib_name }}/prebuilds
-
-  windows_prebuild:
-    name: windows
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "16"
-          cache: yarn
-
-      - run: yarn install --frozen-lockfile
-
-      - run: yarn prebuild-lib
-        env:
-          LIB_NAME: ${{ github.event.inputs.lib_name }}
-
-      - uses: actions/upload-artifact@v3
-        with:
-          path: libs/${{ github.event.inputs.lib_name }}/prebuilds
-
-  macos_prebuild:
-    name: macos
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "16"
-          cache: yarn
-
-      - run: yarn install --frozen-lockfile
-
-      - run: yarn prebuild-lib
-        env:
-          LIB_NAME: ${{ github.event.inputs.lib_name }}
-
-      - uses: actions/upload-artifact@v3
-        with:
-          path: libs/${{ github.event.inputs.lib_name }}/prebuilds
+          path: libs/downloaded-lib/prebuilds
 
   publish:
     name: publish
     runs-on: ubuntu-latest
-    needs:
-      - linux_prebuild
-      - windows_prebuild
-      - macos_prebuild
+    needs: prebuild
     steps:
       - uses: actions/checkout@v3
 
@@ -88,8 +53,14 @@ jobs:
 
       - run: yarn install --frozen-lockfile
 
-      - uses: actions/download-artifact@v3
-
-      - run: yarn publish-lib
+      - run: yarn run pipeline
         env:
           LIB_NAME: ${{ github.event.inputs.lib_name }}
+          PIPELINE: clone
+
+      - uses: actions/download-artifact@v3
+
+      - run: yarn run pipeline
+        env:
+          LIB_NAME: ${{ github.event.inputs.lib_name }}
+          PIPELINE: publish

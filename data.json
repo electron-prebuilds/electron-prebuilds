@@ -1,5 +1,10 @@
 [
     {
+        "source": "oznakn/cutcopy-example",
+        "nan": false,
+        "ref": "758c85c839689709fa9cf74a62976eb621ce3a9b"
+    },
+    {
         "source": "m4heshd/better-sqlite3-multiple-ciphers",
         "nan": true,
         "ref": "02eb7891f2a6535a30cfbe34bf138aba0f5d47c2"

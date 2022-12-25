@@ -7,8 +7,7 @@
     "email": "ozn.akn@gmail.com"
   },
   "scripts": {
-    "prebuild-lib": "yarn zx src/index.mjs",
-    "publish-lib": "cross-env LIB_PUBLISH=1 yarn zx src/index.mjs"
+    "pipeline": "yarn zx src/index.mjs"
   },
   "dependencies": {},
   "devDependencies": {
