@@ -2,18 +2,30 @@
   "name": "electron-prebuilds",
   "version": "0.1.0",
   "license": "MIT",
+  "type": "module",
   "author": {
     "name": "Ozan Akın",
     "email": "ozn.akn@gmail.com"
   },
   "scripts": {
-    "pipeline": "yarn zx src/index.mjs"
+    "pipeline": "ts-node --esm src/index.ts"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "cross-env": "^7.0.3",
+  "dependencies": {
     "readdirp": "^3.6.0",
-    "rimraf": "^3.0.2",
     "zx": "^7.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.17",
+    "@typescript-eslint/eslint-plugin": "^5.47.0",
+    "@typescript-eslint/parser": "^5.47.0",
+    "eslint": "^8.30.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-simple-import-sort": "^8.0.0",
+    "eslint-plugin-unused-imports": "^2.0.0",
+    "ts-node": "^10.9.1",
+    "type-fest": "^3.4.0",
+    "typescript": "~4.8.4"
   }
 }
