@@ -35,7 +35,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          path: downloaded-lib/prebuilds
+          path: downloaded-lib/prebuilds/**/*.node
 
   publish:
     name: publish
@@ -58,6 +58,7 @@ jobs:
 
       - uses: actions/download-artifact@v3
 
+      - run: ls
       - run: ls downloaded-lib
       - run: ls downloaded-lib/prebuilds
 
