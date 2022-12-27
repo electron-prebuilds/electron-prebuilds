@@ -63,11 +63,8 @@ jobs:
           name: prebuilds
           path: downloaded-lib/prebuilds/
 
-      - uses: dkershner6/use-npm-token-action@v1
+      - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
-
-      - run: yarn run pipeline
-        env:
-          LIB_NAME: ${{ github.event.inputs.lib_name }}
-          PIPELINE: publish
+          package: downloaded-lib/package.json
+          access: public

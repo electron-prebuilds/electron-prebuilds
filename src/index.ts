@@ -39,8 +39,6 @@ async function main() {
   } else if (process.env.PIPELINE === 'clone') {
     pipeline.push('clone');
     pipeline.push('patch');
-  } else if (process.env.PIPELINE === 'publish') {
-    pipeline.push('publish');
   }
 
   const fns: Function[] = (await Promise.all(pipeline.map(n => import(`./${n}.js`)))).map(({ default: fn }) => fn);
