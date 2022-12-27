@@ -68,11 +68,11 @@ async function patchPackageJSON(libData: LibData) {
 
   packageJSON.name = `@electron-prebuilds/${libData.name}-test`;
 
-  const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version!);
-  packageJSON.version = `${packageJSON.version!}-prebuild.${buildVersion}`;
+  const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version);
+  packageJSON.version = `${packageJSON.version}-prebuild.${buildVersion}`;
   console.log('decided version', packageJSON.version);
 
-  const dependencies = packageJSON.dependencies!;
+  const { dependencies } = packageJSON;
   if (dependencies.nan) {
     dependencies[NAN_PACKAGE] = dependencies.nan;
     delete dependencies.nan;

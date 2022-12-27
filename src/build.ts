@@ -3,6 +3,8 @@
 
 import 'zx/globals';
 
+import type { PackageJson } from 'type-fest';
+
 import type { LibData } from './defs.js';
 
 const ARCHS = process.platform === 'win32' ? ['x64'] : ['x64', 'arm64'];
@@ -13,17 +15,24 @@ const ELECTRON_VERSIONS = ['18.0.0', '19.0.0', '20.0.0', '21.0.0', '22.0.0'];
 export default async function build(libData: LibData) {
   cd(libData.targetPath);
 
-  if (await fs.pathExists(path.join(libData.targetPath, 'yarn.lock'))) {
-    await $`yarn install --ignore-scripts`;
-  } else {
-    await $`npm install --ignore-scripts`;
-  }
+  const packageJSONPath = path.join(libData.targetPath, 'package.json');
+  const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  for (const arch of ARCHS) {
-    if (libData.nan) {
-      await $`npx prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
-    } else {
-      await $`npx prebuildify --strip --arch=${arch} --napi`;
+  if (!packageJSON.os || packageJSON.os.includes(process.platform)) {
+    if (!(await fs.pathExists(path.join(libData.targetPath, 'yarn.lock')))) {
+      await $`yarn import`;
     }
+
+    await $`yarn install --ignore-scripts --ignore-platform --ignore-engines`;
+
+    for (const arch of ARCHS) {
+      if (libData.nan) {
+        await $`npx prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
+      } else {
+        await $`npx prebuildify --strip --arch=${arch} --napi`;
+      }
+    }
+  } else {
+    console.log('skipping build');
   }
 }
