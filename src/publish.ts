@@ -7,5 +7,5 @@ export default async function publish(libData: LibData) {
 
   await $`ls prebuilds`;
 
-  await $`npm publish --access public --dry-run`;
+  await $`npm publish --access public`;
 }
