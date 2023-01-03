@@ -1,32 +1,47 @@
 [
-    {
-        "source": "oznakn/cutcopy-example",
-        "nan": false,
-        "ref": "758c85c839689709fa9cf74a62976eb621ce3a9b"
-    },
-    {
-        "source": "m4heshd/better-sqlite3-multiple-ciphers",
-        "nan": true,
-        "ref": "02eb7891f2a6535a30cfbe34bf138aba0f5d47c2"
-    },
-    {
-        "source": "stackgl/headless-gl",
-        "nan": true,
-        "ref": "fc01c03c43d244333fcf831c9fc2a7fe97247b96",
-        "deps": {
-            "linux": [
-                "xutils-dev",
-                "libxi-dev",
-                "libxxf86vm-dev",
-                "x11proto-xf86vidmode-dev",
-                "mesa-utils",
-                "xvfb",
-                "libgl1-mesa-dri",
-                "libglapi-mesa",
-                "libosmesa6",
-                "musl-dev",
-                "libgl1-mesa-dev"
-            ]
-        }
+  {
+    "source": "oznakn/cutcopy-example",
+    "nan": false,
+    "ref": "758c85c839689709fa9cf74a62976eb621ce3a9b"
+  },
+  {
+    "source": "m4heshd/better-sqlite3-multiple-ciphers",
+    "nan": true,
+    "ref": "02eb7891f2a6535a30cfbe34bf138aba0f5d47c2"
+  },
+  {
+    "source": "stackgl/headless-gl",
+    "nan": true,
+    "ref": "fc01c03c43d244333fcf831c9fc2a7fe97247b96",
+    "deps": {
+      "linux": [
+        "xutils-dev",
+        "libxi-dev",
+        "libxxf86vm-dev",
+        "x11proto-xf86vidmode-dev",
+        "mesa-utils",
+        "xvfb",
+        "libgl1-mesa-dri",
+        "libglapi-mesa",
+        "libosmesa6",
+        "musl-dev",
+        "libgl1-mesa-dev"
+      ]
     }
+  },
+  {
+    "source": "Automattic/node-canvas",
+    "nan": true,
+    "ref": "55d39cb532a3a8e828516603d7bbc9fafe5c190b",
+    "deps": {
+      "linux": [
+        "build-essential",
+        "libcairo2-dev",
+        "libpango1.0-dev",
+        "libjpeg-dev",
+        "libgif-dev",
+        "librsvg2-dev"
+      ]
+    }
+  }
 ]
