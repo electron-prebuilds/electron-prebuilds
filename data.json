@@ -58,10 +58,8 @@
         "g++-multilib",
         "gcc-multilib",
         "libcups2-dev",
-        "libcups2-dev:i386",
         "libc6-dev-i386",
-        "linux-libc-dev",
-        "linux-libc-dev:i386"
+        "linux-libc-dev"
       ]
     }
   },
