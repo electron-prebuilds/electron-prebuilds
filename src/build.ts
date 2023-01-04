@@ -19,11 +19,11 @@ export default async function build(libData: LibData) {
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
   if (!packageJSON.os || packageJSON.os.includes(process.platform)) {
-    if (!(await fs.pathExists(path.join(libData.targetPath, 'yarn.lock')))) {
-      await $`yarn import`;
+    if (await fs.pathExists(path.join(libData.targetPath, 'yarn.lock'))) {
+      await $`yarn install --ignore-scripts`;
+    } else {
+      await $`npm install --ignore-scripts`;
     }
-
-    await $`yarn install --ignore-scripts --ignore-platform --ignore-engines`;
 
     for (const arch of ARCHS) {
       if (libData.nan) {
