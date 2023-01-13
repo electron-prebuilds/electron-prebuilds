@@ -1,44 +1,44 @@
 import 'zx/globals';
 
+import gypParser from 'gyp-parser';
 import readdirp from 'readdirp';
 
 import type { PackageJson } from 'type-fest';
 
-import type { LibData } from './defs.js';
+import type { PackageContext } from './defs.js';
 
-const NAN_PACKAGE = '@electron-prebuilds/nan';
-const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
-const BINDINGS_VERSION = '*';
+export const NAN_PACKAGE = '@electron-prebuilds/nan-test';
+export const BINDINGS_PACKAGE = '@electron-prebuilds/bindings-test';
+export const BINDINGS_VERSION = '*';
 
-const NODE_GYP_BUILD_VERSION = '4.5.0';
+export const NODE_GYP_BUILD_VERSION = '4.5.0';
 
-async function patchIgnoreFile(targetPath: string) {
-  if (await fs.pathExists(targetPath)) {
-    const inputData = await fs.readFile(targetPath, 'utf8');
-    let output = '';
+const getPrebuildRequire = (basePath: string) => `(function() {
+  if (process.__ep_webpack) {
+    return require('${basePath}' + process.__ep_prebuild);
+  } else {
+    const nodeAbi = require('node-abi');
+    const platform = process.versions.electron ? 'electron' : 'node';
+    const abiVersion = nodeAbi.getAbi(process.versions.electron || process.version, platform);
+    const arch = process.platform === 'darwin' ? 'darwin-x64+arm64' : (process.platform + '-' + process.arch);
 
-    for (let line of inputData.split('\n')) {
-      line = line.trim();
-
-      if (line.includes('prebuilds')) continue;
-
-      output += `${line}\n`;
-    }
-
-    await fs.writeFile(targetPath, output);
+    return require('${basePath}' + arch + '/' + platform + '.abi' +  abiVersion + '.node');
   }
-}
+})()`;
 
-async function patchBindingsRequire(libData: LibData) {
-  for await (const entry of readdirp(libData.targetPath, { fileFilter: '*.*js' })) {
+async function patchBindingsRequire(ctx: PackageContext) {
+  for await (const entry of readdirp(ctx.path, { fileFilter: '*.*js' })) {
     let fileContent = await fs.readFile(entry.fullPath, 'utf-8');
 
-    if (fileContent.includes('require(\'bindings\')') || fileContent.includes('require("bindings")')) {
-      fileContent = fileContent.replace(/require\('bindings'\)/g, `require('${BINDINGS_PACKAGE}')`);
-      fileContent = fileContent.replace(/require\("bindings"\)/g, `require('${BINDINGS_PACKAGE}')`);
+    const relativePath = path.relative(ctx.path, entry.fullPath);
+    const depth = relativePath.split(path.sep).length - 1;
+    const baseImportPath = `${'../'.repeat(depth)}prebuilds/`;
 
-      await fs.writeFile(entry.fullPath, fileContent);
-    }
+    fileContent = fileContent.replace(/require\(["'`]bindings["'`]\)\(.*?\)/g, getPrebuildRequire(baseImportPath));
+    fileContent = fileContent.replace(/require\(["'`]\.\/bindings\.node["'`]\)/g, getPrebuildRequire(baseImportPath));
+    fileContent = fileContent.replace(/require\(["'`].*?\.\/build\/.*?\.node["'`]\)/g, getPrebuildRequire(baseImportPath));
+
+    await fs.writeFile(entry.fullPath, fileContent);
   }
 }
 
@@ -62,64 +62,67 @@ async function getNewBuildVersion(packageName: string, baseVersion: string) {
   return 0;
 }
 
-async function patchPackageJSON(libData: LibData) {
-  const packageJSONPath = path.join(libData.targetPath, 'package.json');
+async function patchPackageJSON(ctx: PackageContext) {
+  const packageJSONPath = path.join(ctx.path, 'package.json');
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  packageJSON.name = `@electron-prebuilds/${libData.name}-test`;
+  packageJSON.name = `@electron-prebuilds-preview/${ctx.input.name}-test`;
 
   const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version);
   packageJSON.version = `${packageJSON.version}-prebuild.${buildVersion}`;
   console.log('decided version', packageJSON.version);
 
   const { dependencies } = packageJSON;
+  dependencies['node-abi'] = dependencies['node-abi'] || '*';
+
   if (dependencies.nan) {
-    dependencies[NAN_PACKAGE] = dependencies.nan;
-    delete dependencies.nan;
+    ctx.isNan = true;
+  } else {
+    ctx.isNan = false;
   }
-  if (dependencies.bindings) {
-    dependencies[BINDINGS_PACKAGE] = BINDINGS_VERSION;
-    delete dependencies.bindings;
-  }
-  dependencies['node-gyp-build'] = dependencies['node-gyp-build'] || NODE_GYP_BUILD_VERSION;
-  delete dependencies['prebuild-install'];
-
-  packageJSON.files = packageJSON.files || [];
-  packageJSON.files.push('prebuilds/**');
-
-  packageJSON.scripts = {
-    install: 'node-gyp-build',
-  };
 
   await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
 }
 
-async function patchGypFile(libData: LibData) {
-  if (libData.nan) {
-    const gypfilePath = path.join(libData.targetPath, 'binding.gyp');
-    let gypfile = await fs.readFile(gypfilePath, 'utf8');
+async function patchGypFile(ctx: PackageContext) {
+  const gypfilePath = path.join(ctx.path, 'binding.gyp');
+  const gypfile = gypParser.parse(await fs.readFile(gypfilePath, 'utf-8'));
 
-    gypfile = gypfile.replace(/require\('nan'\)/g, `require('${NAN_PACKAGE}')`);
-    gypfile = gypfile.replace(/require\("nan"\)/g, `require("${NAN_PACKAGE}")`);
-    gypfile = gypfile.replace(/require\(`nan`\)/g, `require(\`${NAN_PACKAGE}\`)`);
+  const { targets } = gypfile;
 
-    await fs.writeFile(gypfilePath, gypfile);
+  for (const target of targets) {
+    target.conditions = target.conditions || [] as any;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+    target.conditions.push(
+      ['OS=="mac"', {
+        xcode_settings: {
+          OTHER_CFLAGS: [
+            '-arch x86_64',
+            '-arch arm64',
+          ],
+          OTHER_LDFLAGS: [
+            '-arch x86_64',
+            '-arch arm64',
+          ],
+        },
+      }],
+    );
   }
+
+  const output = JSON.stringify(gypfile, null, 4);
+  await fs.writeFile(gypfilePath, output);
 }
 
-export default async function patch(libData: LibData) {
-  cd(libData.targetPath);
+export default async function patch(ctx: PackageContext) {
+  cd(ctx.path);
 
-  await patchPackageJSON(libData);
-  await patchBindingsRequire(libData);
-  await patchGypFile(libData);
-
-  await patchIgnoreFile(path.join(libData.targetPath, '.gitignore'));
-  await patchIgnoreFile(path.join(libData.targetPath, '.npmignore'));
-
-  if (await fs.pathExists(path.join(process.cwd(), `patches/${libData.name}`))) {
-    await $`git apply ../../patches/${libData.name}/*.patch`;
+  for await (const entry of readdirp('../patches', { fileFilter: `${ctx.name}-*.patch` })) {
+    await $`patch -p1 < ${entry.fullPath}`;
   }
+
+  await patchPackageJSON(ctx);
+  await patchBindingsRequire(ctx);
+  await patchGypFile(ctx);
 
   echo('patch finished');
 }

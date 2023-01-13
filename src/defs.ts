@@ -1,12 +1,12 @@
-export interface LibData {
+export interface PackageInput {
   name: string;
-  source: string;
-  targetPath: string;
-  ref: string;
-  nan?: boolean;
-  deps?: {
-    linux?: string[];
-    win32?: string[];
-    darwin?: string[];
-  }
+  version: string;
+}
+
+export interface PackageContext {
+  input: PackageInput;
+  name: string;
+  nameWithVersion: string;
+  path: string;
+  isNan: boolean;
 }

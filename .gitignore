@@ -1,11 +1,11 @@
+/package
+
 # compiled output
 /dist
 /node_modules
 /node_modules_bak
 /documentation
 /temp
-/libs
-/downloaded-lib
 
 # Logs
 /logs
