@@ -16,7 +16,7 @@ export default async function prepublish(ctx: PackageContext) {
         file: path.join(prebuildsPath, `${platform}.tgz`),
         gzip: true,
       },
-      [path.join(prebuildsPath, platform)],
+      [path.join('prebuilds', platform)],
     );
   }));
 }
