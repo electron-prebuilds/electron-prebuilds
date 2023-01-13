@@ -13,9 +13,9 @@ export const BINDINGS_VERSION = '*';
 
 export const NODE_GYP_BUILD_VERSION = '4.5.0';
 
-const getPrebuildRequire = (basePath: string) => `(function() {
+const getAbiPrebuildRequire = (basePath: string) => `(function() {
   if (process.__ep_webpack) {
-    return require('${basePath}' + process.__ep_prebuild);
+    return require('${basePath}' + process.__ep_prebuild_abi);
   } else {
     const nodeAbi = require('node-abi');
     const platform = process.versions.electron ? 'electron' : 'node';
@@ -23,6 +23,16 @@ const getPrebuildRequire = (basePath: string) => `(function() {
     const arch = process.platform === 'darwin' ? 'darwin-x64+arm64' : (process.platform + '-' + process.arch);
 
     return require('${basePath}' + arch + '/' + platform + '.abi' +  abiVersion + '.node');
+  }
+})()`;
+
+const getNapiPrebuildRequire = (basePath: string) => `(function() {
+  if (process.__ep_webpack) {
+    return require('${basePath}' + process.__ep_prebuild_napi);
+  } else {
+    const arch = process.platform === 'darwin' ? 'darwin-x64+arm64' : (process.platform + '-' + process.arch);
+
+    return require('${basePath}' + arch + '/node.napi.node');
   }
 })()`;
 
@@ -34,9 +44,11 @@ async function patchBindingsRequire(ctx: PackageContext) {
     const depth = relativePath.split(path.sep).length - 1;
     const baseImportPath = `${'../'.repeat(depth)}prebuilds/`;
 
-    fileContent = fileContent.replace(/require\(["'`]bindings["'`]\)\(.*?\)/g, getPrebuildRequire(baseImportPath));
-    fileContent = fileContent.replace(/require\(["'`]\.\/bindings\.node["'`]\)/g, getPrebuildRequire(baseImportPath));
-    fileContent = fileContent.replace(/require\(["'`].*?\.\/build\/.*?\.node["'`]\)/g, getPrebuildRequire(baseImportPath));
+    const newRequire = ctx.isNan ? getAbiPrebuildRequire(baseImportPath) : getNapiPrebuildRequire(baseImportPath);
+
+    fileContent = fileContent.replace(/require\(["'`]bindings["'`]\)\(.*?\)/g, newRequire);
+    fileContent = fileContent.replace(/require\(["'`]\.\/bindings\.node["'`]\)/g, newRequire);
+    fileContent = fileContent.replace(/require\(["'`].*?\.\/build\/.*?\.node["'`]\)/g, newRequire);
 
     await fs.writeFile(entry.fullPath, fileContent);
   }
