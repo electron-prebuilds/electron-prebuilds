@@ -17,15 +17,14 @@ export default async function prepare(ctx: PackageContext) {
 
   const prebuildsPath = path.join(ctx.path, 'prebuilds');
 
-  const arch = `${process.platform}-${process.arch}`;
-
+  const platformString = `${process.platform}-${process.arch}`;
   if (process.platform !== 'darwin') {
     await tar.create(
       {
-        file: path.join(prebuildsPath, `${ctx.packageName}-${arch}.tgz`),
+        file: path.join(prebuildsPath, `${ctx.packageName}-${platformString}.tgz`),
         gzip: true,
       },
-      [path.join('prebuilds', arch)],
+      [path.join('prebuilds', platformString)],
     );
   } else if (ctx.libData.universal) {
     const pathCommon = path.join(prebuildsPath, `${ctx.packageName}-darwin-x64+arm64.tgz`);
@@ -43,28 +42,25 @@ export default async function prepare(ctx: PackageContext) {
     await fs.copy(pathCommon, pathX64);
     await fs.copy(pathCommon, pathArm64);
   } else {
-    const pathCommon = path.join(prebuildsPath, 'darwin-x64+arm64');
+    const copyAndPack = async (currentArch: string) => {
+      const pathCommon = path.join(prebuildsPath, 'darwin-x64+arm64');
 
-    await fs.remove(pathCommon);
-    await fs.copy(path.join(prebuildsPath, 'darwin-x64'), pathCommon);
+      await fs.remove(pathCommon);
+      await fs.copy(path.join(prebuildsPath, `darwin-${currentArch}`), pathCommon);
 
-    await tar.create(
-      {
-        file: path.join(prebuildsPath, `${ctx.packageName}-darwin-x64.tgz`),
-        gzip: true,
-      },
-      [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', 'darwin-x64')],
-    );
+      await tar.create(
+        {
+          file: path.join(prebuildsPath, `${ctx.packageName}-darwin-${currentArch}.tgz`),
+          gzip: true,
+        },
+        [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', `darwin-${currentArch}`)],
+      );
+    };
 
-    await fs.remove(pathCommon);
-    await fs.copy(path.join(prebuildsPath, 'darwin-arm64'), pathCommon);
-
-    await tar.create(
-      {
-        file: path.join(prebuildsPath, `${ctx.packageName}-darwin-arm64.tgz`),
-        gzip: true,
-      },
-      [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', 'darwin-arm64')],
-    );
+    const archs = process.arch === 'x64' ? ['arm64', 'x64'] : ['x64', 'arm64'];
+    for (const arch of archs) {
+      // eslint-disable-next-line no-await-in-loop
+      await copyAndPack(arch);
+    }
   }
 }

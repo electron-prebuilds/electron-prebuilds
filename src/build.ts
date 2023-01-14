@@ -15,23 +15,20 @@ export default async function build(ctx: PackageContext) {
   const packageJSONPath = path.join(ctx.path, 'package.json');
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  const archs = ['x64'];
+  const archs = new Set<string>();
 
   if (process.platform !== 'darwin') {
-    archs.push('x64');
+    archs.add('x64');
   } else if (ctx.libData.universal) {
-    archs.push('x64+arm64');
-  } else if (process.arch === 'x64') {
-    archs.push('arm64');
-    archs.push('x64');
+    archs.add('x64+arm64');
   } else {
-    archs.push('x64');
-    archs.push('arm64');
+    archs.add('x64');
+    archs.add('arm64');
   }
 
   // TODO: enable later
   // if (process.platform === 'linux') {
-  //   archs.push('arm64');
+  //   archs.add('arm64');
   // }
 
   if (!packageJSON.os || packageJSON.os.includes(process.platform)) {

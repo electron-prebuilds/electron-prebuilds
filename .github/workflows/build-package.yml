@@ -30,7 +30,7 @@ jobs:
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload,publish"
+          PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
   windows_prebuild:
     name: windows
@@ -52,7 +52,7 @@ jobs:
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload,publish"
+          PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
   macos_prebuild:
     name: macos
@@ -73,7 +73,7 @@ jobs:
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload,publish"
+          PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
   publish:
     name: publish
