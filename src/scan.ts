@@ -63,7 +63,7 @@ export default async function scan(ctx: PackageContext) {
           await gh.getByTagAsync(auth, GITHUB_ORG, GITHUB_REPO, tag);
         } catch {
           if (process.env.DRY_RUN === 'false') {
-            await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag, prerelease: true });
+            await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag });
           } else {
             echo('release', tag, 'will be created');
           }
@@ -73,7 +73,7 @@ export default async function scan(ctx: PackageContext) {
         const tag = `${ctx.input.isPreview ? 'preview-' : ''}${ctx.normalizedName}-${version}-prebuild.${newBuildVersion}`;
 
         if (process.env.DRY_RUN === 'false') {
-          await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag, prerelease: true });
+          await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag });
         } else {
           echo('release', tag, 'will be created');
         }
