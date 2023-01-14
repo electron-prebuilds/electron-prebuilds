@@ -5,9 +5,11 @@ import tar from 'tar';
 import type { PackageContext } from './defs.js';
 
 export default async function fetch(ctx: PackageContext) {
+  if (!ctx.input.version) throw new Error('version is undefined');
+
   await $`rm -rf ${ctx.path}`;
 
-  const fileName = `${ctx.packageName}.tgz`;
+  const fileName = `${ctx.githubAssetName}.tgz`;
 
   await $`npm pack ${ctx.input.name}@${ctx.input.version}`;
 

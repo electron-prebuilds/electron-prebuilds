@@ -3,6 +3,8 @@
     "test": "require('./lib')"
   },
   "thiagoelg-node-printer": {
+    "npmName": "@thiagoelg/node-printer",
+    "accept": ">=0.6.0",
     "universal": false,
     "nanVersion": "2.16.0",
     "test": "require('./lib')",

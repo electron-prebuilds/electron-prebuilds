@@ -1,6 +1,8 @@
 name: Build prebuilds for a package
 
 on:
+  release:
+    types: [created]
   workflow_dispatch:
     inputs:
       package_name:
@@ -29,6 +31,7 @@ jobs:
 
       - run: yarn run pipeline
         env:
+          RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -51,6 +54,7 @@ jobs:
 
       - run: yarn run pipeline
         env:
+          RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -72,6 +76,7 @@ jobs:
 
       - run: yarn run pipeline
         env:
+          RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}
@@ -99,6 +104,7 @@ jobs:
 
       - run: yarn run pipeline
         env:
+          RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
           GITHUB_TOKEN: ${{ github.token }}

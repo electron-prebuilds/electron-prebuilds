@@ -11,12 +11,14 @@ export const ELECTRON_VERSIONS: string[] = ['18.0.0', '19.0.0', '20.0.0', '21.0.
 
 export type PackageInput = {
   name: string;
-  version: string;
+  version?: string;
   isPreview: boolean;
 };
 
 export type LibData = {
+  npmName: string;
   universal: boolean;
+  accept?: string,
   nanVersion?: string;
   test?: string,
   deps?: {
@@ -27,7 +29,7 @@ export type LibData = {
 
 export class PackageContext {
   static fromReleaseTag(tag: string) {
-    if (!tag.includes('.prebuild-')) throw new Error('Release tag is broken');
+    if (!tag.includes('-prebuild.')) throw new Error('Release tag is broken');
 
     let isPreview = false;
     if (tag.startsWith('preview-')) {
@@ -35,7 +37,7 @@ export class PackageContext {
       tag = tag.slice('preview-'.length);
     }
 
-    const parts = tag.split('.prebuild-')[0].split('-');
+    const parts = tag.split('-prebuild.')[0].split('-');
     const name = parts.slice(0, -1).join('-');
     const version = parts.at(-1);
 
@@ -59,25 +61,26 @@ export class PackageContext {
     const data = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
 
     this.libData = Object.assign({
+      npmName: input.name,
       universal: true,
     }, data[this.normalizedName] || {});
-  }
-
-  get npmName() {
-    if (this.input.isPreview) return `@electron-prebuilds-preview/${this.normalizedName}`;
-
-    return `@electron-prebuilds/${this.normalizedName}`;
   }
 
   get normalizedName() {
     return this.input.name.replace(/@/g, '').replace(/\//g, '-');
   }
 
-  get packageName() {
+  get newNpmName() {
+    if (this.input.isPreview) return `@electron-prebuilds-preview/${this.normalizedName}`;
+
+    return `@electron-prebuilds/${this.normalizedName}`;
+  }
+
+  get githubAssetName() {
     return `${this.normalizedName}-${this.input.version}`;
   }
 
-  get releaseName() {
+  get githubReleaseName() {
     if (this.input.isPreview) return `preview-${this.normalizedName}-${this.newVersion}`;
 
     return `${this.normalizedName}-${this.newVersion}`;

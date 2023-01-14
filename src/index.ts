@@ -4,11 +4,15 @@ import { PackageContext } from './defs.js';
 
 let ctx: PackageContext;
 
-if (process.env.RELEASE_TAG) {
-  ctx = PackageContext.fromReleaseTag(process.env.RELEASE_TAG);
+if (process.env.RELEASE_TAG && process.env.RELEASE_TAG.startsWith('refs/tags/')) {
+  const tag = process.env.RELEASE_TAG.slice('refs/tags/'.length);
+
+  echo('using release', tag);
+
+  ctx = PackageContext.fromReleaseTag(tag);
 } else {
-  if (!process.env.PACKAGE_NAME || !process.env.PACKAGE_VERSION) {
-    throw new Error('PACKAGE_NAME or PACKAGE_VERSION is undefined');
+  if (!process.env.PACKAGE_NAME) {
+    throw new Error('PACKAGE_NAME is undefined');
   }
 
   ctx = new PackageContext({

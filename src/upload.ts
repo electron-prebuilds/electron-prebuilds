@@ -2,16 +2,10 @@
 
 import 'zx/globals';
 
-import util from 'util';
-import gh from 'ghreleases';
-
 import { GITHUB_ORG, GITHUB_REPO } from './defs.js';
+import { gh } from './utils.js';
 
 import type { PackageContext } from './defs.js';
-
-gh.createAsync = util.promisify(gh.create.bind(gh));
-gh.uploadAssetsAsync = util.promisify(gh.uploadAssets.bind(gh));
-gh.getByTagAsync = util.promisify(gh.getByTag.bind(gh));
 
 export default async function publish(ctx: PackageContext) {
   if (process.env.DRY_RUN === 'false') {
@@ -26,7 +20,7 @@ export default async function publish(ctx: PackageContext) {
     const platforms = await fs.readdir(prebuildsPath);
     const files = platforms.filter(p => p.endsWith('.tgz')).map(p => path.join(prebuildsPath, p));
 
-    const tag = ctx.releaseName;
+    const tag = ctx.githubReleaseName;
     const ref = `tags/${tag}`;
 
     try {
