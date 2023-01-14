@@ -96,8 +96,13 @@ async function patchGypFile(ctx: PackageContext) {
   for (const target of targets) {
     target.conditions = target.conditions || [] as any;
 
-    target.cflags_cc = target.cflags_cc || [];
-    target.cflags_cc.push('-std=c++20');
+    if (Array.isArray(target['cflags_cc!'])) {
+      target['cflags_cc!'].push('-std=c++20');
+    } else if (Array.isArray(target.cflags_cc)) {
+      target.cflags_cc.push('-std=c++20');
+    } else {
+      target['cflags_cc!'] = ['-std=c++20'];
+    }
 
     if (ctx.libData.universal) {
       target.conditions.push(
