@@ -1,7 +1,11 @@
 {
   "recycle-bin": {
     "accept": ">=0.1.2",
-    "test": "require('./index')"
+    "test": "require('./index')",
+    "os": [
+      "win32",
+      "darwin"
+    ]
   },
   "better-sqlite3": {
     "accept": ">=8.0.0",
