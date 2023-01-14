@@ -19,6 +19,7 @@ export interface PackageInput {
 export interface LibData {
   universal: boolean;
   nanVersion?: string;
+  test?: string,
   deps?: {
     linux?: string[],
     darwin?: string[],

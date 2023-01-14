@@ -1,6 +1,6 @@
 import 'zx/globals';
 
-import type { PackageContext } from './defs';
+import type { PackageContext } from './defs.js';
 
 export default async function publish(ctx: PackageContext) {
   cd(ctx.path);

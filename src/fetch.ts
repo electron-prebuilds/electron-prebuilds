@@ -2,7 +2,7 @@ import 'zx/globals';
 
 import tar from 'tar';
 
-import type { PackageContext } from './defs';
+import type { PackageContext } from './defs.js';
 
 export default async function fetch(ctx: PackageContext) {
   await $`rm -rf ${ctx.path}`;

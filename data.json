@@ -1,7 +1,11 @@
 {
+  "better-sqlite3": {
+    "test": "require('./lib')"
+  },
   "thiagoelg-node-printer": {
     "universal": false,
     "nanVersion": "2.16.0",
+    "test": "require('./lib')",
     "deps": {
       "linux": [
         "g++-multilib",

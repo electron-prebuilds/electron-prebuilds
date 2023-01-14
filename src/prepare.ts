@@ -2,7 +2,7 @@ import 'zx/globals';
 
 import tar from 'tar';
 
-import type { PackageContext } from './defs';
+import type { PackageContext } from './defs.js';
 
 const BASE_IGNORE_LIST = ['/prebuilds/', '/build/', '.npmrc'];
 
