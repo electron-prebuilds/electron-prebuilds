@@ -9,6 +9,9 @@ on:
         required: false
         default: false
 
+env:
+  DRY_RUN: "false"
+
 jobs:
   scan:
     name: scan
