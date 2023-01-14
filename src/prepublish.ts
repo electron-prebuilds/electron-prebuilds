@@ -4,40 +4,67 @@ import tar from 'tar';
 
 import type { PackageContext } from './defs';
 
+const BASE_IGNORE_LIST = ['/prebuilds/', '/build/', '.npmrc'];
+
 export default async function prepublish(ctx: PackageContext) {
   cd(ctx.path);
 
-  const prebuildsPath = path.join(ctx.path, 'prebuilds');
-  const platforms = await fs.readdir(prebuildsPath, { withFileTypes: true });
-
-  await Promise.all(
-    platforms
-      .filter(platform => platform.isDirectory())
-      .map(async (platform) => {
-        await tar.create(
-          {
-            file: path.join(prebuildsPath, `${ctx.nameWithVersion}-${platform.name}.tgz`),
-            gzip: true,
-          },
-          [path.join('prebuilds', platform.name)],
-        );
-      }),
+  await fs.appendFile(
+    path.join(ctx.path, '.npmignore'),
+    `\n\n${BASE_IGNORE_LIST.join('\n')}}`,
+    { encoding: 'utf-8' },
   );
 
-  if (process.platform === 'darwin') {
-    const darwinPath = path.join(prebuildsPath, `${ctx.nameWithVersion}-darwin-x64+arm64.tgz`);
+  const prebuildsPath = path.join(ctx.path, 'prebuilds');
 
-    if (await fs.pathExists(darwinPath)) {
-      const copyPath1 = path.join(prebuildsPath, `${ctx.nameWithVersion}-darwin-x64.tgz`);
-      const copyPath2 = path.join(prebuildsPath, `${ctx.nameWithVersion}-darwin-arm64.tgz`);
+  const arch = `${process.platform}-${process.arch}`;
 
-      if (!(await fs.pathExists(copyPath1))) {
-        await fs.copy(darwinPath, copyPath1);
-      }
+  if (process.platform !== 'darwin') {
+    await tar.create(
+      {
+        file: path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-${arch}.tgz`),
+        gzip: true,
+      },
+      [path.join('prebuilds', arch)],
+    );
+  } else if (ctx.libData.universal) {
+    const pathCommon = path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-x64+arm64.tgz`);
+    const pathX64 = path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-x64.tgz`);
+    const pathArm64 = path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-arm64.tgz`);
 
-      if (!(await fs.pathExists(copyPath2))) {
-        await fs.copy(darwinPath, copyPath2);
-      }
-    }
+    await tar.create(
+      {
+        file: pathCommon,
+        gzip: true,
+      },
+      [path.join('prebuilds', 'darwin-x64+arm64')],
+    );
+
+    await fs.copy(pathCommon, pathX64);
+    await fs.copy(pathCommon, pathArm64);
+  } else {
+    const pathCommon = path.join(prebuildsPath, 'darwin-x64+arm64');
+
+    await fs.remove(pathCommon);
+    await fs.copy(path.join(prebuildsPath, 'darwin-x64'), pathCommon);
+
+    await tar.create(
+      {
+        file: path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-x64.tgz`),
+        gzip: true,
+      },
+      [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', 'darwin-x64')],
+    );
+
+    await fs.remove(pathCommon);
+    await fs.copy(path.join(prebuildsPath, 'darwin-arm64'), pathCommon);
+
+    await tar.create(
+      {
+        file: path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-arm64.tgz`),
+        gzip: true,
+      },
+      [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', 'darwin-arm64')],
+    );
   }
 }

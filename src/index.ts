@@ -1,6 +1,8 @@
 import 'zx/globals';
 
-import type { PackageContext, PackageInput } from 'defs';
+import { PackageContext } from './defs.js';
+
+import type { PackageInput } from './defs.js';
 
 process.env.FORCE_COLOR = '3';
 if (!process.env.PACKAGE_NAME || !process.env.PACKAGE_VERSION) {
@@ -12,13 +14,7 @@ const input: PackageInput = {
   version: process.env.PACKAGE_VERSION,
 };
 
-const ctx: PackageContext = {
-  input,
-  name: input.name.replace(/@/g, '').replace(/\//g, '-'),
-  nameWithVersion: `${input.name}-${input.version}`.replace(/@/g, '').replace(/\//g, '-'),
-  path: path.join(process.cwd(), 'package'),
-  isNan: false,
-};
+const ctx = new PackageContext(input);
 
 async function main() {
   const pipeline: string[] = process.env.PIPELINE?.split(',') || [];

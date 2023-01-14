@@ -62,42 +62,44 @@ async function getNewBuildVersion(packageName: string, baseVersion: string) {
 
     const versions = Object.keys(result)
       .filter(k => k !== 'modified' && k !== 'created')
-      .filter(k => k.includes('-prebuild.'))
+      .filter(k => new RegExp(`^${baseVersion}-\\d+$`).test(k))
       .sort((a, b) => (result[a] > result[b] ? -1 : 1));
 
-    const searchText = `${baseVersion}-prebuild.`;
-    for (const version of versions) {
-      if (version.startsWith(searchText)) return Number(version.substring(searchText.length + 1)) + 1;
+    if (versions.length > 0) {
+      return Number(versions[0].substring(baseVersion.length + 1)) + 1;
     }
   } catch {} // eslint-disable-line no-empty
 
-  return 0;
+  return 1;
 }
 
 async function patchPackageJSON(ctx: PackageContext) {
   const packageJSONPath = path.join(ctx.path, 'package.json');
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  packageJSON.name = `@electron-prebuilds-preview/${ctx.name}-test`;
+  packageJSON.name = `@electron-prebuilds-preview/${ctx.normalizedName}-test`;
 
   const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version);
-  packageJSON.version = `${packageJSON.version}-prebuild.${buildVersion}`;
+  packageJSON.version = `${packageJSON.version}-${buildVersion}`;
   console.log('decided version', packageJSON.version);
 
   const { dependencies } = packageJSON;
-  dependencies['node-abi'] = dependencies['node-abi'] || '*';
+  ctx.isNan = !!dependencies.nan;
 
-  if (dependencies.nan) {
-    ctx.isNan = true;
-  } else {
-    ctx.isNan = false;
-  }
+  dependencies['node-abi'] = dependencies['node-abi'] || '*';
+  dependencies['prebuild-install'] = dependencies['prebuild-install'] || '*';
+
+  packageJSON.scripts = {
+    install: 'prebuild-install',
+    rebuild: 'npm run install',
+  };
 
   packageJSON.binary = packageJSON.binary || {};
   packageJSON.binary = {
     host: 'https://github.com/electron-prebuilds/electron-prebuilds/releases/download/',
-    remote_path: '{name}-{version}',
-    package_name: '{name}-{version}-{platform}-{arch}.tgz',
+    // remote_path: `${ctx.name}-{version}`,
+    remote_path: 'test-0.1.0-1',
+    package_name: `${ctx.normalizedNameWithVersion}-{platform}-{arch}.tgz`,
   };
 
   await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
@@ -107,25 +109,27 @@ async function patchGypFile(ctx: PackageContext) {
   const gypfilePath = path.join(ctx.path, 'binding.gyp');
   const gypfile = gypParser.parse(await fs.readFile(gypfilePath, 'utf-8'));
 
-  const { targets } = gypfile;
+  if (ctx.libData.universal) {
+    const { targets } = gypfile;
 
-  for (const target of targets) {
-    target.conditions = target.conditions || [] as any;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    target.conditions.push(
-      ['OS=="mac"', {
-        xcode_settings: {
-          OTHER_CFLAGS: [
-            '-arch x86_64',
-            '-arch arm64',
-          ],
-          OTHER_LDFLAGS: [
-            '-arch x86_64',
-            '-arch arm64',
-          ],
-        },
-      }],
-    );
+    for (const target of targets) {
+      target.conditions = target.conditions || [] as any;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+      target.conditions.push(
+        ['OS=="mac"', {
+          xcode_settings: {
+            OTHER_CFLAGS: [
+              '-arch x86_64',
+              '-arch arm64',
+            ],
+            OTHER_LDFLAGS: [
+              '-arch x86_64',
+              '-arch arm64',
+            ],
+          },
+        }],
+      );
+    }
   }
 
   const output = JSON.stringify(gypfile, null, 4);
@@ -135,8 +139,10 @@ async function patchGypFile(ctx: PackageContext) {
 export default async function patch(ctx: PackageContext) {
   cd(ctx.path);
 
-  for await (const entry of readdirp('../patches', { fileFilter: `${ctx.name}-*.patch` })) {
-    await $`patch -p1 < ${entry.fullPath}`;
+  for await (const entry of readdirp('../patches', { fileFilter: `${ctx.normalizedName}-*.patch` })) {
+    try {
+      await $`patch -p1 < ${entry.fullPath}`;
+    } catch {} // eslint-disable-line no-empty
   }
 
   await patchPackageJSON(ctx);
