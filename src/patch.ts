@@ -124,14 +124,9 @@ async function patchGypFile(ctx: PackageContext) {
     target.conditions.push(
       ['OS=="mac"', {
         xcode_settings: {
-          OTHER_CPLUSPLUSFLAGS: [
+          OTHER_CFLAGS: [
             '-std=c++20',
-            '-stdlib=libc++',
           ],
-          OTHER_LDFLAGS: [
-            '-stdlib=libc++',
-          ],
-          MACOSX_DEPLOYMENT_TARGET: '10.7',
         },
       }],
     );
