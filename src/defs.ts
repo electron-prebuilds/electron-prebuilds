@@ -12,6 +12,8 @@ export class PackageContext {
 
   public isNan: boolean = false;
 
+  public newVersion: string;
+
   public libData: LibData;
 
   constructor(public readonly input: PackageInput) {
@@ -29,5 +31,9 @@ export class PackageContext {
 
   get normalizedNameWithVersion() {
     return `${this.normalizedName}-${this.input.version}`;
+  }
+
+  get normalizedNameWithNewVersion() {
+    return `${this.normalizedName}-${this.newVersion}`;
   }
 }

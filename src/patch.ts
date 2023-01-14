@@ -83,6 +83,8 @@ async function patchPackageJSON(ctx: PackageContext) {
   packageJSON.version = `${packageJSON.version}-${buildVersion}`;
   console.log('decided version', packageJSON.version);
 
+  ctx.newVersion = packageJSON.version;
+
   const { dependencies } = packageJSON;
   ctx.isNan = !!dependencies.nan;
 
@@ -97,8 +99,7 @@ async function patchPackageJSON(ctx: PackageContext) {
   packageJSON.binary = packageJSON.binary || {};
   packageJSON.binary = {
     host: 'https://github.com/electron-prebuilds/electron-prebuilds/releases/download/',
-    // remote_path: `${ctx.name}-{version}`,
-    remote_path: 'test-0.1.0-1',
+    remote_path: ctx.normalizedNameWithNewVersion,
     package_name: `${ctx.normalizedNameWithVersion}-{platform}-{arch}.tgz`,
   };
 

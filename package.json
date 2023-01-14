@@ -11,6 +11,7 @@
     "pipeline": "ts-node --esm src/index.ts"
   },
   "dependencies": {
+    "ghreleases": "^3.0.2",
     "gyp-parser": "^1.0.4",
     "readdirp": "^3.6.0",
     "tar": "^6.1.13",
