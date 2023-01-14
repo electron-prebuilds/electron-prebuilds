@@ -1,6 +1,3 @@
-/* eslint-disable no-await-in-loop */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import 'zx/globals';
 
 import semver from 'semver';
@@ -21,7 +18,7 @@ export async function getNPMVersions(packageName: string, acceptString: string) 
       .sort((a, b) => (result[a] > result[b] ? 1 : -1));
 
     return versions;
-  } catch {} // eslint-disable-line no-empty
+  } catch {}
 
   return [];
 }

@@ -53,7 +53,6 @@ export default async function prepare(ctx: PackageContext) {
 
     const archs = process.arch === 'x64' ? ['arm64', 'x64'] : ['x64', 'arm64'];
     for (const arch of archs) {
-      // eslint-disable-next-line no-await-in-loop
       await copyAndPack(arch);
     }
   }

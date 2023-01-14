@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import util from 'util';
 import gh from 'ghreleases';
 

@@ -29,7 +29,6 @@ async function main() {
 
   const fns: Function[] = (await Promise.all(pipeline.map(n => import(`./${n}.js`)))).map(({ default: fn }) => fn);
   for (const fn of fns) {
-    // eslint-disable-next-line no-await-in-loop
     await fn(ctx);
   }
 }

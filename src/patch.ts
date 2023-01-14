@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import 'zx/globals';
 
 import gypParser from 'gyp-parser';
@@ -157,7 +156,7 @@ export default async function patch(ctx: PackageContext) {
   for await (const entry of readdirp('../patches', { fileFilter: `${ctx.normalizedName}-*.patch` })) {
     try {
       await $`patch -p1 < ${entry.fullPath}`;
-    } catch {} // eslint-disable-line no-empty
+    } catch {}
   }
 
   await patchPackageJSON(ctx);

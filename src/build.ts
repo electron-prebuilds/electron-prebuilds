@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-/* eslint-disable no-await-in-loop */
 
 import 'zx/globals';
 

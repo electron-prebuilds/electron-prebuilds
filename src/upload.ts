@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import 'zx/globals';
 
 import { GITHUB_ORG, GITHUB_REPO } from './defs.js';
@@ -9,7 +7,6 @@ import type { PackageContext } from './defs.js';
 
 export default async function upload(ctx: PackageContext) {
   if (ctx.libData.os && !ctx.libData.os.includes(process.platform)) return;
-  // await ctx.initPackageJSON();
 
   cd(ctx.path);
 

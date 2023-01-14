@@ -13,7 +13,10 @@ module.exports = {
   plugins: ['@typescript-eslint/eslint-plugin', 'simple-import-sort', 'unused-imports'],
   extends: ['airbnb-base', 'airbnb-typescript/base', 'plugin:@typescript-eslint/recommended-requiring-type-checking'],
   rules: {
+    '@typescript-eslint/no-unsafe-call': 0,
+    'no-await-in-loop': 0,
     'no-continue': 0,
+    'no-empty': 0,
 
     /* Airbnb overrides */
     'arrow-parens': [2, 'as-needed', { 'requireForBlockBody': true }],

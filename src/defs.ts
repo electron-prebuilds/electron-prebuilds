@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/lines-between-class-members */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 
 import type { PackageJson } from 'type-fest';
 
@@ -134,7 +133,7 @@ export class PackageContext {
       if (versions.length > 0) {
         return Number(versions[0].substring(this.input.version.length + '-prebuild.'.length)) + 1;
       }
-    } catch {} // eslint-disable-line no-empty
+    } catch {}
 
     return 1;
   }
