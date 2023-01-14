@@ -1,0 +1,32 @@
+name: Scan single package
+
+on:
+  workflow_dispatch:
+    inputs:
+      package_name:
+        description: "Package name"
+        required: true
+
+env:
+  DRY_RUN: "false"
+
+jobs:
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: yarn run pipeline
+        env:
+          PACKAGE_NAME: ${{ github.event.inputs.package_name }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          FORCE_CREATE_RELEASE: "true"
+          PIPELINE: "scan"

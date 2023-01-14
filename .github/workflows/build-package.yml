@@ -6,6 +6,9 @@ on:
 
 env:
   DRY_RUN: "false"
+  RELEASE_TAG: ${{ github.ref }}
+  GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+  NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
 jobs:
   linux_prebuild:
@@ -23,11 +26,6 @@ jobs:
 
       - run: yarn run pipeline
         env:
-          RELEASE_TAG: ${{ github.ref }}
-          PACKAGE_NAME: ${{ github.event.inputs.package_name }}
-          PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
   windows_prebuild:
@@ -45,11 +43,6 @@ jobs:
 
       - run: yarn run pipeline
         env:
-          RELEASE_TAG: ${{ github.ref }}
-          PACKAGE_NAME: ${{ github.event.inputs.package_name }}
-          PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
   macos_prebuild:
@@ -67,11 +60,6 @@ jobs:
 
       - run: yarn run pipeline
         env:
-          RELEASE_TAG: ${{ github.ref }}
-          PACKAGE_NAME: ${{ github.event.inputs.package_name }}
-          PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
   publish:
@@ -95,9 +83,4 @@ jobs:
 
       - run: yarn run pipeline
         env:
-          RELEASE_TAG: ${{ github.ref }}
-          PACKAGE_NAME: ${{ github.event.inputs.package_name }}
-          PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,publish"
