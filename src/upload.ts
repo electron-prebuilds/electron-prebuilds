@@ -15,25 +15,27 @@ gh.uploadAssetsAsync = util.promisify(gh.uploadAssets.bind(gh));
 gh.getByTagAsync = util.promisify(gh.getByTag.bind(gh));
 
 export default async function publish(ctx: PackageContext) {
-  cd(ctx.path);
+  if (process.env.DRY_RUN === 'false') {
+    cd(ctx.path);
 
-  const auth = {
-    user: 'x-oauth',
-    token: process.env.GITHUB_TOKEN,
-  };
+    const auth = {
+      user: 'x-oauth',
+      token: process.env.GITHUB_TOKEN,
+    };
 
-  const prebuildsPath = path.join(ctx.path, 'prebuilds');
-  const platforms = await fs.readdir(prebuildsPath);
-  const files = platforms.filter(p => p.endsWith('.tgz')).map(p => path.join(prebuildsPath, p));
+    const prebuildsPath = path.join(ctx.path, 'prebuilds');
+    const platforms = await fs.readdir(prebuildsPath);
+    const files = platforms.filter(p => p.endsWith('.tgz')).map(p => path.join(prebuildsPath, p));
 
-  const tag = ctx.normalizedNameWithNewVersion;
-  const ref = `tags/${tag}`;
+    const tag = ctx.normalizedNameWithNewVersion;
+    const ref = `tags/${tag}`;
 
-  try {
-    await gh.getByTagAsync(auth, ORG, REPO, tag);
-  } catch {
-    await gh.createAsync(auth, ORG, REPO, { tag_name: tag });
+    try {
+      await gh.getByTagAsync(auth, ORG, REPO, tag);
+    } catch {
+      await gh.createAsync(auth, ORG, REPO, { tag_name: tag });
+    }
+
+    await gh.uploadAssetsAsync(auth, ORG, REPO, ref, files);
   }
-
-  await gh.uploadAssetsAsync(auth, ORG, REPO, ref, files);
 }
