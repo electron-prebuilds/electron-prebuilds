@@ -1,4 +1,8 @@
 {
+  "recycle-bin": {
+    "accept": ">=0.1.2",
+    "test": "require('./index')"
+  },
   "better-sqlite3": {
     "accept": ">=8.0.0",
     "universal": false,
