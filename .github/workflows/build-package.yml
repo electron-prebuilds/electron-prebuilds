@@ -34,7 +34,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
@@ -57,7 +57,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
@@ -79,7 +79,7 @@ jobs:
           RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,deps-installer,build,prepare,test,upload"
 
@@ -107,6 +107,6 @@ jobs:
           RELEASE_TAG: ${{ github.ref }}
           PACKAGE_NAME: ${{ github.event.inputs.package_name }}
           PACKAGE_VERSION: ${{ github.event.inputs.package_version }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           PIPELINE: "fetch,patch,publish"

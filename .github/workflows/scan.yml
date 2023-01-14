@@ -9,9 +9,6 @@ on:
         required: false
         default: false
 
-permissions:
-  contents: write
-
 jobs:
   scan:
     name: scan
@@ -28,6 +25,6 @@ jobs:
 
       - run: jq -r 'keys' data.json | jq -r -c '.[]' | while read line ; do PACKAGE_NAME=$line yarn run pipeline ; done
         env:
-          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
           FORCE_CREATE_RELEASE: ${{ github.event.inputs.force_create_release }}
           PIPELINE: "scan"
