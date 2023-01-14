@@ -4,7 +4,6 @@
     "test": "require('./lib')"
   },
   "better-sqlite3-multiple-ciphers": {
-    "accept": ">=8.0.0",
     "test": "require('./lib')"
   },
   "thiagoelg-node-printer": {
@@ -28,7 +27,6 @@
     }
   },
   "gl": {
-    "accept": ">=6.0.0",
     "deps": {
       "linux": [
         "xutils-dev",
