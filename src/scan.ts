@@ -37,7 +37,7 @@ export default async function scan(ctx: PackageContext) {
 
     if (newCtx.prebuildVersion === 1 || process.env.FORCE_CREATE_RELEASE === 'true') {
       if (process.env.DRY_RUN === 'false') {
-        await gh.createAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, { tag_name: newCtx.githubReleaseName });
+        await gh.createAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, { tag_name: newCtx.githubReleaseName, prerelease: true });
       } else {
         echo('release', newCtx.githubReleaseName, 'will be created');
       }
