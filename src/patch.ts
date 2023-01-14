@@ -64,7 +64,7 @@ async function patchPackageJSON(ctx: PackageContext) {
       dependencies.nan = dependencies.nan.slice(1);
     }
 
-    dependencies.nan = `npm:${NAN_PACKAGE}@~${ctx.libData.nanVersion || dependencies.nan}-prebuild`;
+    dependencies.nan = `npm:${NAN_PACKAGE}@~${ctx.libData.config?.nanVersion || dependencies.nan}-prebuild`;
   }
 
   ctx.packageJSON.repository = {
@@ -94,14 +94,61 @@ async function patchGypFile(ctx: PackageContext) {
   const { targets } = gypfile;
 
   for (const target of targets) {
-    target.conditions = target.conditions || [] as any;
+    if (ctx.libData.config?.noCppPatch !== true) {
+      if (Array.isArray(target['cflags_cc!'])) {
+        target['cflags_cc!'].push('-std=c++20');
+      } else if (Array.isArray(target.cflags_cc)) {
+        target.cflags_cc.push('-std=c++20');
+      } else {
+        target['cflags_cc!'] = ['-std=c++20'];
+      }
 
-    if (Array.isArray(target['cflags_cc!'])) {
-      target['cflags_cc!'].push('-std=c++20');
-    } else if (Array.isArray(target.cflags_cc)) {
-      target.cflags_cc.push('-std=c++20');
-    } else {
-      target['cflags_cc!'] = ['-std=c++20'];
+      if (target?.xcode_settings) {
+        target.xcode_settings.OTHER_CFLAGS = target.xcode_settings.OTHER_CPLUSPLUSFLAGS;
+        delete target.xcode_settings.OTHER_CPLUSPLUSFLAGS;
+      }
+
+      target.conditions = target.conditions || [] as any;
+      for (const cond of target.conditions) {
+        if (cond[1]?.xcode_settings) {
+          cond[1].xcode_settings.OTHER_CFLAGS = cond[1].xcode_settings.OTHER_CPLUSPLUSFLAGS;
+          delete cond[1].xcode_settings.OTHER_CPLUSPLUSFLAGS;
+        }
+
+        if (cond[2]?.xcode_settings) {
+          cond[2].xcode_settings.OTHER_CFLAGS = cond[2].xcode_settings.OTHER_CPLUSPLUSFLAGS;
+          delete cond[2].xcode_settings.OTHER_CPLUSPLUSFLAGS;
+        }
+      }
+
+      target.conditions.push(
+        ['OS=="mac"', {
+          xcode_settings: {
+            OTHER_CFLAGS: [
+              '-std=c++20',
+              '-stdlib=libc++',
+            ],
+            OTHER_LDFLAGS: [
+              '-stdlib=libc++',
+            ],
+          },
+        }],
+      );
+
+      target.conditions.push(
+        ['OS=="win"', {
+          msvs_settings: {
+            VCCLCompilerTool: {
+              AdditionalOptions: [
+                '/std:c++20',
+              ],
+            },
+            ClCompile: {
+              LanguageStandard: 'stdcpp20',
+            },
+          },
+        }],
+      );
     }
 
     if (ctx.libData.universal) {
@@ -120,36 +167,6 @@ async function patchGypFile(ctx: PackageContext) {
         }],
       );
     }
-
-    target.conditions.push(
-      ['OS=="mac"', {
-        xcode_settings: {
-          OTHER_CPLUSPLUSFLAGS: [
-            '-std=c++20',
-            '-stdlib=libc++',
-          ],
-          OTHER_LDFLAGS: [
-            '-stdlib=libc++',
-          ],
-          MACOSX_DEPLOYMENT_TARGET: '10.7',
-        },
-      }],
-    );
-
-    target.conditions.push(
-      ['OS=="win"', {
-        msvs_settings: {
-          VCCLCompilerTool: {
-            AdditionalOptions: [
-              '/std:c++20',
-            ],
-          },
-          ClCompile: {
-            LanguageStandard: 'stdcpp20',
-          },
-        },
-      }],
-    );
   }
 
   const output = JSON.stringify(gypfile, null, 4);
