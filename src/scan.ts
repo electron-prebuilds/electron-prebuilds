@@ -16,6 +16,7 @@ export async function getNPMVersions(packageName: string, acceptString: string) 
 
     const versions = Object.keys(result)
       .filter(k => k !== 'modified' && k !== 'created')
+      .filter(k => !k.includes('-'))
       .filter(k => semver.satisfies(k, acceptString))
       .sort((a, b) => (result[a] > result[b] ? -1 : 1));
 
