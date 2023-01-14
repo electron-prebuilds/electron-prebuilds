@@ -1,0 +1,30 @@
+name: Scan modules
+
+on:
+  workflow_dispatch:
+    inputs:
+      force_create_release:
+        description: "Force create releases"
+        type: boolean
+        required: false
+        default: false
+
+jobs:
+  scan:
+    name: scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          cache: yarn
+
+      - run: yarn install --frozen-lockfile
+
+      - run: jq -r 'keys' data.json | jq -r -c '.[]' | while read line ; do PACKAGE_NAME=$line yarn run pipeline ; done
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          FORCE_CREATE_RELEASE: ${{ github.event.inputs.force_create_release }}
+          PIPELINE: "scan"

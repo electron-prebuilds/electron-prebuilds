@@ -10,6 +10,25 @@ import { gh } from './utils.js';
 
 import type { PackageContext } from './defs.js';
 
+async function getNewBuildVersion(packageName: string, baseVersion: string) {
+  try {
+    const { stdout } = await $`npm show ${packageName} time --json`;
+
+    const result = JSON.parse(stdout);
+
+    const versions = Object.keys(result)
+      .filter(k => k !== 'modified' && k !== 'created')
+      .filter(k => new RegExp(`^${baseVersion}-prebuild\\.\\d+$`).test(k))
+      .sort((a, b) => (result[a] > result[b] ? -1 : 1));
+
+    if (versions.length > 0) {
+      return Number(versions[0].substring(baseVersion.length + '-prebuild.'.length)) + 1;
+    }
+  } catch {} // eslint-disable-line no-empty
+
+  return 1;
+}
+
 async function getVersions(packageName: string, acceptString: string) {
   try {
     const { stdout } = await $`npm show ${packageName} time --json`;
@@ -37,11 +56,18 @@ export default async function scan(ctx: PackageContext) {
     };
 
     for (const version of versions) {
-      const tag = `${ctx.input.isPreview ? 'preview-' : ''}${ctx.normalizedName}-${version}-prebuild.1`;
+      if (process.env.FORCE_CREATE_RELEASE !== 'true') {
+        const tag = `${ctx.input.isPreview ? 'preview-' : ''}${ctx.normalizedName}-${version}-prebuild.1`;
 
-      try {
-        await gh.getByTagAsync(auth, GITHUB_ORG, GITHUB_REPO, tag);
-      } catch {
+        try {
+          await gh.getByTagAsync(auth, GITHUB_ORG, GITHUB_REPO, tag);
+        } catch {
+          await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag, prerelease: true });
+        }
+      } else {
+        const newBuildVersion = await getNewBuildVersion(ctx.libData.npmName, version);
+        const tag = `${ctx.input.isPreview ? 'preview-' : ''}${ctx.normalizedName}-${version}-prebuild.${newBuildVersion}`;
+
         await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag, prerelease: true });
       }
     }
