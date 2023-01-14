@@ -19,6 +19,7 @@
     }
   },
   "gl": {
+    "accept": ">=6.0.0",
     "deps": {
       "linux": [
         "xutils-dev",
