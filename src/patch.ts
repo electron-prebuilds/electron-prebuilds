@@ -97,10 +97,10 @@ async function patchGypFile(ctx: PackageContext) {
     if (ctx.libData.config?.noCppPatch !== true) {
       if (Array.isArray(target['cflags_cc!'])) {
         target['cflags_cc!'].push('-std=c++20');
-      } else if (Array.isArray(target.cflags_cc)) {
-        target.cflags_cc.push('-std=c++20');
       } else {
-        target['cflags_cc!'] = ['-std=c++20'];
+        target.cflags_cc = target.cflags_cc || [];
+
+        target.cflags_cc.push('-std=c++20');
       }
 
       if (target?.xcode_settings) {
