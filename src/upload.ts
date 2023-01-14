@@ -5,10 +5,9 @@ import 'zx/globals';
 import util from 'util';
 import gh from 'ghreleases';
 
-import type { PackageContext } from './defs';
+import { GITHUB_ORG, GITHUB_REPO } from './defs.js';
 
-const ORG = 'electron-prebuilds';
-const REPO = 'electron-prebuilds';
+import type { PackageContext } from './defs.js';
 
 gh.createAsync = util.promisify(gh.create.bind(gh));
 gh.uploadAssetsAsync = util.promisify(gh.uploadAssets.bind(gh));
@@ -31,11 +30,11 @@ export default async function publish(ctx: PackageContext) {
     const ref = `tags/${tag}`;
 
     try {
-      await gh.getByTagAsync(auth, ORG, REPO, tag);
+      await gh.getByTagAsync(auth, GITHUB_ORG, GITHUB_REPO, tag);
     } catch {
-      await gh.createAsync(auth, ORG, REPO, { tag_name: tag });
+      await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag });
     }
 
-    await gh.uploadAssetsAsync(auth, ORG, REPO, ref, files);
+    await gh.uploadAssetsAsync(auth, GITHUB_ORG, GITHUB_REPO, ref, files);
   }
 }

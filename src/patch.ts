@@ -3,11 +3,11 @@ import 'zx/globals';
 import gypParser from 'gyp-parser';
 import readdirp from 'readdirp';
 
+import { NAN_PACKAGE, NODE_ABI_VERSION, NODE_GYP_VERSION, PREBUILD_INSTALL_VERSION } from './defs.js';
+
 import type { PackageJson } from 'type-fest';
 
 import type { PackageContext } from './defs.js';
-
-const NAN_PACKAGE = '@electron-prebuilds/nan';
 
 const getAbiPrebuildRequire = (basePath: string) => `(function() {
   if (process.__ep_webpack) {
@@ -81,7 +81,11 @@ async function patchPackageJSON(ctx: PackageContext) {
 
   ctx.newVersion = packageJSON.version;
 
-  const { dependencies } = packageJSON;
+  const { dependencies, devDependencies } = packageJSON;
+  devDependencies['node-gyp'] = NODE_GYP_VERSION;
+
+  dependencies['node-abi'] = dependencies['node-abi'] || NODE_ABI_VERSION;
+  dependencies['prebuild-install'] = dependencies['prebuild-install'] || PREBUILD_INSTALL_VERSION;
 
   if (dependencies.nan) {
     ctx.isNan = true;
@@ -92,9 +96,6 @@ async function patchPackageJSON(ctx: PackageContext) {
 
     dependencies.nan = `npm:${NAN_PACKAGE}@~${ctx.libData.nanVersion || dependencies.nan}-prebuild`;
   }
-
-  dependencies['node-abi'] = dependencies['node-abi'] || '*';
-  dependencies['prebuild-install'] = dependencies['prebuild-install'] || '*';
 
   packageJSON.repository = {
     type: 'git',
@@ -120,13 +121,14 @@ async function patchGypFile(ctx: PackageContext) {
   const gypfilePath = path.join(ctx.path, 'binding.gyp');
   const gypfile = gypParser.parse(await fs.readFile(gypfilePath, 'utf-8'));
 
-  if (ctx.libData.universal) {
-    const { targets } = gypfile;
+  const { targets } = gypfile;
 
-    for (const target of targets) {
-      target.conditions = target.conditions || [] as any;
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      target.conditions.push(
+  for (const target of targets) {
+    const conditions: any[] = target.conditions || [] as any;
+    target.conditions = conditions;
+
+    if (ctx.libData.universal) {
+      conditions.push(
         ['OS=="mac"', {
           xcode_settings: {
             OTHER_CFLAGS: [
@@ -141,6 +143,21 @@ async function patchGypFile(ctx: PackageContext) {
         }],
       );
     }
+
+    conditions.push(
+      ['OS=="mac"', {
+        xcode_settings: {
+          OTHER_CPLUSPLUSFLAGS: [
+            '-std=c++20',
+            '-stdlib=libc++',
+          ],
+          OTHER_LDFLAGS: [
+            '-stdlib=libc++',
+          ],
+          MACOSX_DEPLOYMENT_TARGET: '10.7',
+        },
+      }],
+    );
   }
 
   const output = JSON.stringify(gypfile, null, 4);

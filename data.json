@@ -1,5 +1,6 @@
 {
   "thiagoelg-node-printer": {
-    "universal": false
+    "universal": false,
+    "nanVersion": "2.16.0"
   }
 }

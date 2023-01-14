@@ -1,4 +1,15 @@
-const IS_PREVIEW = process.env.PREVIEW !== 'false';
+export const GITHUB_ORG = 'electron-prebuilds';
+export const GITHUB_REPO = 'electron-prebuilds';
+
+export const NAN_PACKAGE = '@electron-prebuilds/nan';
+export const NODE_GYP_VERSION = '^9.0.0';
+export const PREBUILD_INSTALL_VERSION = '^7.0.0';
+export const NODE_ABI_VERSION = '^3.0.0';
+
+export const NODE_VERSIONS: string[] = ['14.0.0', '16.0.0', '17.0.1', '18.0.0'];
+export const ELECTRON_VERSIONS: string[] = ['18.0.0', '19.0.0', '20.0.0', '21.0.0', '22.0.0'];
+
+export const IS_PREVIEW = process.env.PREVIEW !== 'false';
 
 export interface PackageInput {
   name: string;
