@@ -5,6 +5,7 @@ import type { PackageContext } from './defs.js';
 export default async function depsInstaller(ctx: PackageContext) {
   if (ctx.libData.deps) {
     if (ctx.libData.deps.linux && process.platform === 'linux') {
+      await $`sudo apt-get update -yyq`;
       await $`sudo apt-get install -yyq ${ctx.libData.deps.linux}`;
     }
 

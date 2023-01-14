@@ -6,8 +6,8 @@ export const NODE_GYP_VERSION = '^9.0.0';
 export const PREBUILD_INSTALL_VERSION = '^7.0.0';
 export const NODE_ABI_VERSION = '^3.0.0';
 
-export const NODE_VERSIONS: string[] = ['14.0.0', '16.0.0', '17.0.1', '18.0.0'];
-export const ELECTRON_VERSIONS: string[] = ['18.0.0', '19.0.0', '20.0.0', '21.0.0', '22.0.0'];
+export const NODE_VERSIONS: string[] = ['16.0.0', '18.0.0'];
+export const ELECTRON_VERSIONS: string[] = ['19.0.0', '20.0.0', '22.0.0'];
 
 export type PackageInput = {
   name: string;
