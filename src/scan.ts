@@ -18,7 +18,7 @@ export async function getNPMVersions(packageName: string, acceptString: string) 
       .filter(k => k !== 'modified' && k !== 'created')
       .filter(k => !k.includes('-'))
       .filter(k => semver.satisfies(k, acceptString))
-      .sort((a, b) => (result[a] > result[b] ? -1 : 1));
+      .sort((a, b) => (result[a] > result[b] ? 1 : -1));
 
     return versions;
   } catch {} // eslint-disable-line no-empty
@@ -38,6 +38,8 @@ export default async function scan(ctx: PackageContext) {
     if (newCtx.prebuildVersion === 1 || process.env.FORCE_CREATE_RELEASE === 'true') {
       if (process.env.DRY_RUN === 'false') {
         await gh.createAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, { tag_name: newCtx.githubReleaseName, prerelease: true });
+
+        await sleep(3000);
       } else {
         echo('release', newCtx.githubReleaseName, 'will be created');
       }
