@@ -7,8 +7,8 @@ import { gh, ghAuth } from './utils.js';
 
 import type { PackageContext } from './defs.js';
 
-export default async function publish(ctx: PackageContext) {
-  if (process.env.DRY_RUN === 'false') return;
+export default async function upload(ctx: PackageContext) {
+  if (process.env.DRY_RUN !== 'false') return;
 
   if (ctx.libData.os && !ctx.libData.os.includes(process.platform)) return;
 
