@@ -25,6 +25,7 @@ export type LibData = {
   readonly universal: boolean;
   readonly accept?: string;
   readonly nanVersion?: string;
+  readonly forceNanUse: boolean;
   readonly test?: string;
   readonly os?: string[];
   readonly deps?: {
@@ -79,6 +80,7 @@ export class PackageContext {
     this.libData = Object.assign({
       npmName: input.name,
       universal: true,
+      forceNanUse: false,
     }, data[this.normalizedName] || {});
   }
 
@@ -93,6 +95,8 @@ export class PackageContext {
   }
 
   get isNan() {
+    if (this.libData.forceNanUse === true) return true;
+
     if (!this.packageJSON) throw new Error('Package JSON is not initialized');
 
     return !!this.packageJSON.dependencies.nan;

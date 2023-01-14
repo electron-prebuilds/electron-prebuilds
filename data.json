@@ -2,11 +2,13 @@
   "better-sqlite3": {
     "accept": ">=8.0.0",
     "universal": false,
+    "forceNanUse": true,
     "test": "require('./lib')"
   },
   "better-sqlite3-multiple-ciphers": {
     "accept": ">=8.0.0",
     "universal": false,
+    "forceNanUse": true,
     "test": "require('./lib')"
   },
   "thiagoelg-node-printer": {
