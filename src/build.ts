@@ -8,7 +8,7 @@ import type { PackageJson } from 'type-fest';
 import type { PackageContext } from './defs.js';
 
 const NODE_VERSIONS: string[] = ['16.0.0']; // ['14.0.0', '16.0.0', '17.0.1', '18.0.0'];
-const ELECTRON_VERSIONS: string[] = []; // ['18.0.0', '19.0.0', '20.0.0', '21.0.0', '22.0.0'];
+const ELECTRON_VERSIONS: string[] = ['19.0.0', '20.0.0'];
 
 export default async function build(ctx: PackageContext) {
   cd(ctx.path);

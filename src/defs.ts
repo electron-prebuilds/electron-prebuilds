@@ -7,6 +7,7 @@ export interface PackageInput {
 
 export interface LibData {
   universal: boolean;
+  nanVersion?: string;
 }
 
 export class PackageContext {
