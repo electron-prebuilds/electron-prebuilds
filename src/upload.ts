@@ -32,7 +32,7 @@ export default async function publish(ctx: PackageContext) {
     try {
       await gh.getByTagAsync(auth, GITHUB_ORG, GITHUB_REPO, tag);
     } catch {
-      await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag });
+      await gh.createAsync(auth, GITHUB_ORG, GITHUB_REPO, { tag_name: tag, prerelease: true });
     }
 
     await gh.uploadAssetsAsync(auth, GITHUB_ORG, GITHUB_REPO, ref, files);

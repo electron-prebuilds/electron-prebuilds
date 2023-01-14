@@ -10,6 +10,9 @@ on:
         description: "Package version"
         required: true
 
+env:
+  DRY_RUN: "true"
+
 jobs:
   linux_prebuild:
     name: linux
@@ -35,7 +38,6 @@ jobs:
   windows_prebuild:
     name: windows
     runs-on: windows-latest
-    if: false
     steps:
       - uses: actions/checkout@v3
 
