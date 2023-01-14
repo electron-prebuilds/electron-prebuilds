@@ -171,6 +171,11 @@ async function patchGypFile(ctx: PackageContext) {
             ],
           },
         },
+        msbuild_settings: {
+          ClCompile: {
+            LanguageStandard: 'stdcpp20',
+          },
+        },
       }],
     );
   }
