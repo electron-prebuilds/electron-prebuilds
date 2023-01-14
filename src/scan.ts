@@ -32,7 +32,7 @@ export default async function scan(ctx: PackageContext) {
     const newCtx = new PackageContext({ ...ctx.input, version });
     await newCtx.init();
 
-    if (newCtx.prebuildVersion === 1 || process.env.FORCE_CREATE_RELEASE === 'true') {
+    if (newCtx.prebuildNumber === 1 || process.env.FORCE_CREATE_RELEASE === 'true') {
       if (process.env.DRY_RUN === 'false') {
         await gh.createAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, { tag_name: newCtx.githubReleaseName, prerelease: true });
 

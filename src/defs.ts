@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/lines-between-class-members */
 
+import { gh, ghAuth } from './utils.js';
+
 import type { PackageJson } from 'type-fest';
 
 export const GITHUB_ORG = 'electron-prebuilds';
@@ -15,8 +17,9 @@ export const ELECTRON_VERSIONS: string[] = ['19.0.0', '20.0.0', '22.0.0'];
 
 export type PackageInput = {
   readonly name: string;
-  readonly version?: string;
   readonly isPreview: boolean;
+  readonly version?: string;
+  readonly prebuildNumber?: number;
 };
 
 export type LibData = {
@@ -35,6 +38,16 @@ export type LibData = {
 
 const npmShowCache = new Map<string, string>();
 
+async function isReleaseExist(tag: string) {
+  try {
+    await gh.getByTagAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, tag);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export class PackageContext {
   static fromReleaseTag(tag: string) {
     if (!tag.includes('-prebuild.')) throw new Error('Release tag is broken');
@@ -45,13 +58,17 @@ export class PackageContext {
       tag = tag.slice('preview-'.length);
     }
 
-    const parts = tag.split('-prebuild.')[0].split('-');
+    const [base, prebuildNumber] = tag.split('-prebuild.');
+    if (Number.isNaN(Number(Number(prebuildNumber)))) throw new Error('Release tag is broken due to wrong prebuild');
+
+    const parts = base.split('-');
     const name = parts.slice(0, -1).join('-');
     const version = parts.at(-1);
 
     return new PackageContext({
       name,
       version,
+      prebuildNumber: Number(prebuildNumber),
       isPreview,
     });
   }
@@ -66,13 +83,15 @@ export class PackageContext {
 
   public path: string = path.join(process.cwd(), 'package');
 
-  public prebuildVersion: number = -1;
+  public prebuildNumber: number = -1;
 
   constructor(public readonly input: PackageInput) {
     this.normalizedName = this.input.name.replace(/@/g, '').replace(/\//g, '-');
     this.npmName = `@electron-prebuilds${this.input.isPreview ? '-preview' : ''}/${this.normalizedName}`;
     this.githubAssetPrefix = `${this.normalizedName}-${this.input.version}`;
     this.githubReleasePrefix = `${this.input.isPreview ? 'preview-' : ''}${this.normalizedName}`;
+
+    this.prebuildNumber = this.input.prebuildNumber || -1;
 
     const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data.json'), 'utf-8'));
 
@@ -84,9 +103,9 @@ export class PackageContext {
   }
 
   get npmVersion() {
-    if (this.prebuildVersion === -1) throw new Error('Prebuild version is not initialized');
+    if (this.prebuildNumber === -1) throw new Error('Prebuild number is not initialized');
 
-    return `${this.input.version}-prebuild.${this.prebuildVersion}`;
+    return `${this.input.version}-prebuild.${this.prebuildNumber}`;
   }
 
   get githubReleaseName() {
@@ -106,8 +125,8 @@ export class PackageContext {
   }
 
   public async init() {
-    if (this.input.version) {
-      this.prebuildVersion = await this.fetchPrebuildVersion();
+    if (this.input.version && this.prebuildNumber === -1) {
+      this.prebuildNumber = await this.fetchPrebuildNumber();
     }
   }
 
@@ -115,7 +134,9 @@ export class PackageContext {
     this.packageJSON = JSON.parse(await fs.readFile(path.join(this.path, 'package.json'), 'utf-8'));
   }
 
-  private async fetchPrebuildVersion() {
+  private async fetchPrebuildNumber() {
+    let lastRelease = 0;
+
     try {
       if (!npmShowCache.has(this.npmName)) {
         const { stdout } = await $`npm show ${this.npmName} time --json`;
@@ -131,10 +152,17 @@ export class PackageContext {
         .sort((a, b) => (result[a] > result[b] ? -1 : 1));
 
       if (versions.length > 0) {
-        return Number(versions[0].substring(this.input.version.length + '-prebuild.'.length)) + 1;
+        lastRelease = Number(versions[0].substring(this.input.version.length + '-prebuild.'.length));
       }
-    } catch {}
+    } catch {} // eslint-disable-line no-empty
 
-    return 1;
+    for (let i = lastRelease + 1; ; i += 1) {
+      const tag = `${this.githubReleasePrefix}-${this.input.version}-prebuild.${i}`;
+
+      // eslint-disable-next-line no-await-in-loop
+      if (!(await isReleaseExist(tag))) {
+        return i;
+      }
+    }
   }
 }
