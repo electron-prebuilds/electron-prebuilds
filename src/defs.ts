@@ -19,6 +19,10 @@ export interface PackageInput {
 export interface LibData {
   universal: boolean;
   nanVersion?: string;
+  deps?: {
+    linux?: string[],
+    darwin?: string[],
+  };
 }
 
 export class PackageContext {

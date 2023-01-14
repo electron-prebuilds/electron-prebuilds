@@ -1,6 +1,32 @@
 {
   "thiagoelg-node-printer": {
     "universal": false,
-    "nanVersion": "2.16.0"
+    "nanVersion": "2.16.0",
+    "deps": {
+      "linux": [
+        "g++-multilib",
+        "gcc-multilib",
+        "libcups2-dev",
+        "libc6-dev-i386",
+        "linux-libc-dev"
+      ]
+    }
+  },
+  "gl": {
+    "deps": {
+      "linux": [
+        "xutils-dev",
+        "libxi-dev",
+        "libxxf86vm-dev",
+        "x11proto-xf86vidmode-dev",
+        "mesa-utils",
+        "xvfb",
+        "libgl1-mesa-dri",
+        "libglapi-mesa",
+        "libosmesa6",
+        "musl-dev",
+        "libgl1-mesa-dev"
+      ]
+    }
   }
 }
