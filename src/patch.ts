@@ -78,7 +78,7 @@ async function patchPackageJSON(ctx: PackageContext) {
   const packageJSONPath = path.join(ctx.path, 'package.json');
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  packageJSON.name = `@electron-prebuilds-preview/${ctx.input.name}-test`;
+  packageJSON.name = `@electron-prebuilds-preview/${ctx.name}-test`;
 
   const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version);
   packageJSON.version = `${packageJSON.version}-prebuild.${buildVersion}`;
@@ -92,6 +92,13 @@ async function patchPackageJSON(ctx: PackageContext) {
   } else {
     ctx.isNan = false;
   }
+
+  packageJSON.binary = packageJSON.binary || {};
+  packageJSON.binary = {
+    host: 'https://github.com/electron-prebuilds/electron-prebuilds/releases/download/',
+    remote_path: '{name}-{version}',
+    package_name: '{name}-{version}-{platform}-{arch}.tgz',
+  };
 
   await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
 }
