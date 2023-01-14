@@ -2,19 +2,21 @@ import 'zx/globals';
 
 import { PackageContext } from './defs.js';
 
-import type { PackageInput } from './defs.js';
+let ctx: PackageContext;
 
-process.env.FORCE_COLOR = '3';
-if (!process.env.PACKAGE_NAME || !process.env.PACKAGE_VERSION) {
-  throw new Error('PACKAGE_NAME or PACKAGE_VERSION is undefined');
+if (process.env.RELEASE_TAG) {
+  ctx = PackageContext.fromReleaseTag(process.env.RELEASE_TAG);
+} else {
+  if (!process.env.PACKAGE_NAME || !process.env.PACKAGE_VERSION) {
+    throw new Error('PACKAGE_NAME or PACKAGE_VERSION is undefined');
+  }
+
+  ctx = new PackageContext({
+    name: process.env.PACKAGE_NAME,
+    version: process.env.PACKAGE_VERSION,
+    isPreview: process.env.PREVIEW !== 'false',
+  });
 }
-
-const input: PackageInput = {
-  name: process.env.PACKAGE_NAME,
-  version: process.env.PACKAGE_VERSION,
-};
-
-const ctx = new PackageContext(input);
 
 async function main() {
   const pipeline: string[] = process.env.PIPELINE?.split(',') || [];
