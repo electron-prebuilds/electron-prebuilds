@@ -73,7 +73,7 @@ async function patchPackageJSON(ctx: PackageContext) {
   const packageJSONPath = path.join(ctx.path, 'package.json');
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  packageJSON.name = `@electron-prebuilds-preview/${ctx.normalizedName}-test`;
+  packageJSON.name = ctx.npmName;
 
   const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version);
   packageJSON.version = `${packageJSON.version}-prebuild.${buildVersion}`;
@@ -109,8 +109,8 @@ async function patchPackageJSON(ctx: PackageContext) {
   packageJSON.binary = packageJSON.binary || {};
   packageJSON.binary = {
     host: 'https://github.com/electron-prebuilds/electron-prebuilds/releases/download/',
-    remote_path: ctx.normalizedNameWithNewVersion,
-    package_name: `${ctx.normalizedNameWithVersion}-{platform}-{arch}.tgz`,
+    remote_path: ctx.releaseName,
+    package_name: `${ctx.packageName}-{platform}-{arch}.tgz`,
   };
 
   await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));

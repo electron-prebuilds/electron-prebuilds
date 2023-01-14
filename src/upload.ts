@@ -27,7 +27,7 @@ export default async function publish(ctx: PackageContext) {
     const platforms = await fs.readdir(prebuildsPath);
     const files = platforms.filter(p => p.endsWith('.tgz')).map(p => path.join(prebuildsPath, p));
 
-    const tag = ctx.normalizedNameWithNewVersion;
+    const tag = ctx.releaseName;
     const ref = `tags/${tag}`;
 
     try {

@@ -22,15 +22,15 @@ export default async function prepare(ctx: PackageContext) {
   if (process.platform !== 'darwin') {
     await tar.create(
       {
-        file: path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-${arch}.tgz`),
+        file: path.join(prebuildsPath, `${ctx.packageName}-${arch}.tgz`),
         gzip: true,
       },
       [path.join('prebuilds', arch)],
     );
   } else if (ctx.libData.universal) {
-    const pathCommon = path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-x64+arm64.tgz`);
-    const pathX64 = path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-x64.tgz`);
-    const pathArm64 = path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-arm64.tgz`);
+    const pathCommon = path.join(prebuildsPath, `${ctx.packageName}-darwin-x64+arm64.tgz`);
+    const pathX64 = path.join(prebuildsPath, `${ctx.packageName}-darwin-x64.tgz`);
+    const pathArm64 = path.join(prebuildsPath, `${ctx.packageName}-darwin-arm64.tgz`);
 
     await tar.create(
       {
@@ -50,7 +50,7 @@ export default async function prepare(ctx: PackageContext) {
 
     await tar.create(
       {
-        file: path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-x64.tgz`),
+        file: path.join(prebuildsPath, `${ctx.packageName}-darwin-x64.tgz`),
         gzip: true,
       },
       [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', 'darwin-x64')],
@@ -61,7 +61,7 @@ export default async function prepare(ctx: PackageContext) {
 
     await tar.create(
       {
-        file: path.join(prebuildsPath, `${ctx.normalizedNameWithVersion}-darwin-arm64.tgz`),
+        file: path.join(prebuildsPath, `${ctx.packageName}-darwin-arm64.tgz`),
         gzip: true,
       },
       [path.join('prebuilds', 'darwin-x64+arm64'), path.join('prebuilds', 'darwin-arm64')],
