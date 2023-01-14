@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/lines-between-class-members */
 /* eslint-disable @typescript-eslint/no-unsafe-call */
 
-import { gh, ghAuth } from './utils.js';
-
 import type { PackageJson } from 'type-fest';
 
 export const GITHUB_ORG = 'electron-prebuilds';
@@ -34,16 +32,6 @@ export type LibData = {
     readonly darwin?: string[];
   };
 };
-
-async function isReleaseExist(tag: string) {
-  try {
-    await gh.getByTagAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, tag);
-
-    return true;
-  } catch {
-    return false;
-  }
-}
 
 const npmShowCache = new Map<string, string>();
 
@@ -125,8 +113,6 @@ export class PackageContext {
   }
 
   private async fetchPrebuildVersion() {
-    let lastRelease = 0;
-
     try {
       if (!npmShowCache.has(this.npmName)) {
         const { stdout } = await $`npm show ${this.npmName} time --json`;
@@ -142,17 +128,10 @@ export class PackageContext {
         .sort((a, b) => (result[a] > result[b] ? -1 : 1));
 
       if (versions.length > 0) {
-        lastRelease = Number(versions[0].substring(this.input.version.length + '-prebuild.'.length));
+        return Number(versions[0].substring(this.input.version.length + '-prebuild.'.length)) + 1;
       }
     } catch {} // eslint-disable-line no-empty
 
-    for (let i = lastRelease + 1; ; i += 1) {
-      const tag = `${this.githubReleasePrefix}-${this.input.version}-prebuild.${i}`;
-
-      // eslint-disable-next-line no-await-in-loop
-      if (!(await isReleaseExist(tag))) {
-        return i;
-      }
-    }
+    return 1;
   }
 }

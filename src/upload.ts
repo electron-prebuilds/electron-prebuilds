@@ -8,9 +8,8 @@ import { gh, ghAuth } from './utils.js';
 import type { PackageContext } from './defs.js';
 
 export default async function upload(ctx: PackageContext) {
-  if (process.env.DRY_RUN !== 'false') return;
-
   if (ctx.libData.os && !ctx.libData.os.includes(process.platform)) return;
+  // await ctx.initPackageJSON();
 
   cd(ctx.path);
 
@@ -21,5 +20,9 @@ export default async function upload(ctx: PackageContext) {
   const tag = ctx.githubReleaseName;
   const ref = `tags/${tag}`;
 
-  await gh.uploadAssetsAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, ref, files);
+  if (process.env.DRY_RUN === 'false') {
+    await gh.uploadAssetsAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, ref, files);
+  } else {
+    echo('uploading files to', GITHUB_ORG, GITHUB_REPO, ref, files);
+  }
 }
