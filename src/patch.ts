@@ -36,11 +36,12 @@ async function patchBindingsRequire(ctx: PackageContext) {
 
     const relativePath = path.relative(ctx.path, entry.fullPath);
     const depth = relativePath.split(path.sep).length - 1;
-    const baseImportPath = `${'../'.repeat(depth)}prebuilds/`;
+    const baseImportPath = `./${'../'.repeat(depth)}prebuilds/`;
 
     const newRequire = ctx.isNan ? getAbiPrebuildRequire(baseImportPath) : getNapiPrebuildRequire(baseImportPath);
 
     fileContent = fileContent.replace(/require\(["'`]bindings["'`]\)\(.*?\)/g, newRequire);
+    fileContent = fileContent.replace(/require\(["'`]node-gyp-build["'`]\)\(.*?\)/g, newRequire);
     fileContent = fileContent.replace(/require\(["'`]\.\/bindings\.node["'`]\)/g, newRequire);
     fileContent = fileContent.replace(/require\(["'`].*?\.\/build\/.*?\.node["'`]\)/g, newRequire);
 

@@ -11,6 +11,8 @@ export default async function build(ctx: PackageContext) {
 
   cd(ctx.path);
 
+  await fs.remove(path.join(ctx.path, 'prebuilds'));
+
   const archs = new Set<string>();
 
   if (process.platform !== 'darwin') {
@@ -35,9 +37,9 @@ export default async function build(ctx: PackageContext) {
 
   for (const arch of archs) {
     if (ctx.isNan) {
-      await $`npx prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
+      await $`npx -q prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
     } else {
-      await $`npx prebuildify --strip --arch=${arch} --napi`;
+      await $`npx -q prebuildify --strip --arch=${arch} --napi`;
     }
   }
 }

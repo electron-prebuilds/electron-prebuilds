@@ -48,5 +48,10 @@
         "libgl1-mesa-dev"
       ]
     }
+  },
+  "parcel-watcher": {
+    "accept": ">=2.1.0",
+    "universal": false,
+    "test": "require('./index')"
   }
 }
