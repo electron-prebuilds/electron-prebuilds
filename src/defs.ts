@@ -25,12 +25,13 @@ export type PackageInput = {
 export type LibData = {
   readonly npmName: string;
   readonly universal: boolean;
-  readonly accept?: string,
+  readonly accept?: string;
   readonly nanVersion?: string;
-  readonly test?: string,
+  readonly test?: string;
+  readonly os?: string[];
   readonly deps?: {
-    readonly linux?: string[],
-    readonly darwin?: string[],
+    readonly linux?: string[];
+    readonly darwin?: string[];
   };
 };
 

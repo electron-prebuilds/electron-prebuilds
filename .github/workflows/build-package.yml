@@ -33,7 +33,6 @@ jobs:
   windows_prebuild:
     name: windows
     runs-on: windows-latest
-    if: false
     steps:
       - uses: actions/checkout@v3
 
@@ -80,7 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - linux_prebuild
-      # - windows_prebuild
+      - windows_prebuild
       - macos_prebuild
     steps:
       - run: sleep 10

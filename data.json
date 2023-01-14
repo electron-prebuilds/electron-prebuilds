@@ -8,6 +8,10 @@
     "universal": false,
     "nanVersion": "2.16.0",
     "test": "require('./lib')",
+    "os": [
+      "linux",
+      "darwin"
+    ],
     "deps": {
       "linux": [
         "g++-multilib",

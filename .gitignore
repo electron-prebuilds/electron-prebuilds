@@ -1,5 +1,6 @@
 /package
 test.sh
+run.sh
 
 # compiled output
 /dist

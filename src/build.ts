@@ -8,39 +8,37 @@ import { ELECTRON_VERSIONS, NODE_VERSIONS } from './defs.js';
 import type { PackageContext } from './defs.js';
 
 export default async function build(ctx: PackageContext) {
-  if (!ctx.packageJSON.os || ctx.packageJSON.os.includes(process.platform)) {
-    cd(ctx.path);
+  if (ctx.libData.os && !ctx.libData.os.includes(process.platform)) return;
 
-    const archs = new Set<string>();
+  cd(ctx.path);
 
-    if (process.platform !== 'darwin') {
-      archs.add('x64');
-    } else if (ctx.libData.universal) {
-      archs.add('x64+arm64');
-    } else {
-      archs.add('x64');
-      archs.add('arm64');
-    }
+  const archs = new Set<string>();
 
-    // TODO: enable later
-    // if (process.platform === 'linux') {
-    //   archs.add('arm64');
-    // }
-
-    if (await fs.pathExists(path.join(ctx.path, 'yarn.lock'))) {
-      await $`yarn install --ignore-scripts`;
-    } else {
-      await $`npm install --ignore-scripts`;
-    }
-
-    for (const arch of archs) {
-      if (ctx.isNan) {
-        await $`npx prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
-      } else {
-        await $`npx prebuildify --strip --arch=${arch} --napi`;
-      }
-    }
+  if (process.platform !== 'darwin') {
+    archs.add('x64');
+  } else if (ctx.libData.universal) {
+    archs.add('x64+arm64');
   } else {
-    echo('skipping build');
+    archs.add('x64');
+    archs.add('arm64');
+  }
+
+  // TODO: enable later
+  // if (process.platform === 'linux') {
+  //   archs.add('arm64');
+  // }
+
+  if (await fs.pathExists(path.join(ctx.path, 'yarn.lock'))) {
+    await $`yarn install --ignore-scripts`;
+  } else {
+    await $`npm install --ignore-scripts`;
+  }
+
+  for (const arch of archs) {
+    if (ctx.isNan) {
+      await $`npx prebuildify --strip --arch=${arch} ${NODE_VERSIONS.map(v => ['-t', `node@${v}`]).flat()} ${ELECTRON_VERSIONS.map(v => ['-t', `electron@${v}`]).flat()}`;
+    } else {
+      await $`npx prebuildify --strip --arch=${arch} --napi`;
+    }
   }
 }

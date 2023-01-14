@@ -26,19 +26,19 @@ export async function getNPMVersions(packageName: string, acceptString: string) 
 }
 
 export default async function scan(ctx: PackageContext) {
-  if (ctx.libData.accept) {
-    const versions = await getNPMVersions(ctx.libData.npmName, ctx.libData.accept);
+  if (!ctx.libData.accept) return;
 
-    for (const version of versions) {
-      const newCtx = new PackageContext({ ...ctx.input, version });
-      await newCtx.init();
+  const versions = await getNPMVersions(ctx.libData.npmName, ctx.libData.accept);
 
-      if (newCtx.prebuildVersion === 1 || process.env.FORCE_CREATE_RELEASE === 'true') {
-        if (process.env.DRY_RUN === 'false') {
-          await gh.createAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, { tag_name: newCtx.githubReleaseName });
-        } else {
-          echo('release', newCtx.githubReleaseName, 'will be created');
-        }
+  for (const version of versions) {
+    const newCtx = new PackageContext({ ...ctx.input, version });
+    await newCtx.init();
+
+    if (newCtx.prebuildVersion === 1 || process.env.FORCE_CREATE_RELEASE === 'true') {
+      if (process.env.DRY_RUN === 'false') {
+        await gh.createAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, { tag_name: newCtx.githubReleaseName });
+      } else {
+        echo('release', newCtx.githubReleaseName, 'will be created');
       }
     }
   }

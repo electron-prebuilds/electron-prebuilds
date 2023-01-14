@@ -4,16 +4,10 @@ import tar from 'tar';
 
 import type { PackageContext } from './defs.js';
 
-const BASE_IGNORE_LIST = ['/prebuilds/', '/build/', '.npmrc'];
-
 export default async function prepare(ctx: PackageContext) {
-  cd(ctx.path);
+  if (ctx.libData.os && !ctx.libData.os.includes(process.platform)) return;
 
-  await fs.appendFile(
-    path.join(ctx.path, '.npmignore'),
-    `\n\n${BASE_IGNORE_LIST.join('\n')}}`,
-    { encoding: 'utf-8' },
-  );
+  cd(ctx.path);
 
   const prebuildsPath = path.join(ctx.path, 'prebuilds');
 
