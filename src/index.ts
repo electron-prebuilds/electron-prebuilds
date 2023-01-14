@@ -23,6 +23,8 @@ if (process.env.RELEASE_TAG && process.env.RELEASE_TAG.startsWith('refs/tags/'))
 }
 
 async function main() {
+  await ctx.init();
+
   const pipeline: string[] = process.env.PIPELINE?.split(',') || [];
 
   const fns: Function[] = (await Promise.all(pipeline.map(n => import(`./${n}.js`)))).map(({ default: fn }) => fn);

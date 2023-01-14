@@ -9,11 +9,11 @@ export default async function fetch(ctx: PackageContext) {
 
   await $`rm -rf ${ctx.path}`;
 
-  const fileName = `${ctx.githubAssetName}.tgz`;
-
   await $`npm pack ${ctx.libData.npmName}@${ctx.input.version}`;
 
+  const fileName = `${ctx.githubAssetPrefix}.tgz`;
   await tar.extract({ file: fileName });
-
   await $`rm -f ${fileName}`;
+
+  await ctx.initPackageJSON();
 }

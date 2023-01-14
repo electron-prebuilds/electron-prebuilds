@@ -6,8 +6,6 @@ import readdirp from 'readdirp';
 
 import { NAN_PACKAGE, NODE_ABI_VERSION, NODE_GYP_VERSION, PREBUILD_INSTALL_VERSION } from './defs.js';
 
-import type { PackageJson } from 'type-fest';
-
 import type { PackageContext } from './defs.js';
 
 const getAbiPrebuildRequire = (basePath: string) => `(function() {
@@ -51,46 +49,17 @@ async function patchBindingsRequire(ctx: PackageContext) {
   }
 }
 
-async function getNewBuildVersion(packageName: string, baseVersion: string) {
-  try {
-    const { stdout } = await $`npm show ${packageName} time --json`;
-
-    const result = JSON.parse(stdout);
-
-    const versions = Object.keys(result)
-      .filter(k => k !== 'modified' && k !== 'created')
-      .filter(k => new RegExp(`^${baseVersion}-prebuild\\.\\d+$`).test(k))
-      .sort((a, b) => (result[a] > result[b] ? -1 : 1));
-
-    if (versions.length > 0) {
-      return Number(versions[0].substring(baseVersion.length + '-prebuild.'.length)) + 1;
-    }
-  } catch {} // eslint-disable-line no-empty
-
-  return 1;
-}
-
 async function patchPackageJSON(ctx: PackageContext) {
-  const packageJSONPath = path.join(ctx.path, 'package.json');
-  const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+  ctx.packageJSON.name = ctx.npmName;
+  ctx.packageJSON.version = ctx.npmVersion;
 
-  packageJSON.name = ctx.newNpmName;
-
-  const buildVersion = await getNewBuildVersion(packageJSON.name, packageJSON.version);
-  packageJSON.version = `${packageJSON.version}-prebuild.${buildVersion}`;
-  console.log('decided version', packageJSON.version);
-
-  ctx.newVersion = packageJSON.version;
-
-  const { dependencies, devDependencies } = packageJSON;
+  const { dependencies, devDependencies } = ctx.packageJSON;
   devDependencies['node-gyp'] = NODE_GYP_VERSION;
 
   dependencies['node-abi'] = dependencies['node-abi'] || NODE_ABI_VERSION;
   dependencies['prebuild-install'] = dependencies['prebuild-install'] || PREBUILD_INSTALL_VERSION;
 
   if (dependencies.nan) {
-    ctx.isNan = true;
-
     if (dependencies.nan.startsWith('^') || dependencies.nan.startsWith('~')) {
       dependencies.nan = dependencies.nan.slice(1);
     }
@@ -98,24 +67,24 @@ async function patchPackageJSON(ctx: PackageContext) {
     dependencies.nan = `npm:${NAN_PACKAGE}@~${ctx.libData.nanVersion || dependencies.nan}-prebuild`;
   }
 
-  packageJSON.repository = {
+  ctx.packageJSON.repository = {
     type: 'git',
     url: 'git://github.com/electron-prebuilds/electron-prebuilds.git',
   };
 
-  packageJSON.scripts = {
+  ctx.packageJSON.scripts = {
     install: 'prebuild-install',
     rebuild: 'npm run install',
   };
 
-  packageJSON.binary = packageJSON.binary || {};
-  packageJSON.binary = {
+  ctx.packageJSON.binary = ctx.packageJSON.binary || {};
+  ctx.packageJSON.binary = {
     host: 'https://github.com/electron-prebuilds/electron-prebuilds/releases/download/',
     remote_path: ctx.githubReleaseName,
-    package_name: `${ctx.githubAssetName}-{platform}-{arch}.tgz`,
+    package_name: `${ctx.githubAssetPrefix}-{platform}-{arch}.tgz`,
   };
 
-  await fs.writeFile(packageJSONPath, JSON.stringify(packageJSON, null, 4));
+  await fs.writeFile(path.join(ctx.path, 'package.json'), JSON.stringify(ctx.packageJSON, null, 4));
 }
 
 async function patchGypFile(ctx: PackageContext) {

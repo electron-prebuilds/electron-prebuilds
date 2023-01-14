@@ -1,3 +1,10 @@
+/* eslint-disable @typescript-eslint/lines-between-class-members */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+
+import { gh, ghAuth } from './utils.js';
+
+import type { PackageJson } from 'type-fest';
+
 export const GITHUB_ORG = 'electron-prebuilds';
 export const GITHUB_REPO = 'electron-prebuilds';
 
@@ -10,22 +17,34 @@ export const NODE_VERSIONS: string[] = ['16.0.0', '18.0.0'];
 export const ELECTRON_VERSIONS: string[] = ['19.0.0', '20.0.0', '22.0.0'];
 
 export type PackageInput = {
-  name: string;
-  version?: string;
-  isPreview: boolean;
+  readonly name: string;
+  readonly version?: string;
+  readonly isPreview: boolean;
 };
 
 export type LibData = {
-  npmName: string;
-  universal: boolean;
-  accept?: string,
-  nanVersion?: string;
-  test?: string,
-  deps?: {
-    linux?: string[],
-    darwin?: string[],
+  readonly npmName: string;
+  readonly universal: boolean;
+  readonly accept?: string,
+  readonly nanVersion?: string;
+  readonly test?: string,
+  readonly deps?: {
+    readonly linux?: string[],
+    readonly darwin?: string[],
   };
 };
+
+async function isReleaseExist(tag: string) {
+  try {
+    await gh.getByTagAsync(ghAuth, GITHUB_ORG, GITHUB_REPO, tag);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const npmShowCache = new Map<string, string>();
 
 export class PackageContext {
   static fromReleaseTag(tag: string) {
@@ -48,17 +67,25 @@ export class PackageContext {
     });
   }
 
+  public readonly libData: LibData;
+  public packageJSON: PackageJson;
+
+  public readonly normalizedName: string;
+  public readonly npmName: string;
+  public readonly githubAssetPrefix: string;
+  public readonly githubReleasePrefix: string;
+
   public path: string = path.join(process.cwd(), 'package');
 
-  public isNan: boolean = false;
-
-  public newVersion: string;
-
-  public libData: LibData;
+  public prebuildVersion: number = -1;
 
   constructor(public readonly input: PackageInput) {
-    const targetPath = path.join(process.cwd(), 'data.json');
-    const data = JSON.parse(fs.readFileSync(targetPath, 'utf-8'));
+    this.normalizedName = this.input.name.replace(/@/g, '').replace(/\//g, '-');
+    this.npmName = `@electron-prebuilds${this.input.isPreview ? '-preview' : ''}/${this.normalizedName}`;
+    this.githubAssetPrefix = `${this.normalizedName}-${this.input.version}`;
+    this.githubReleasePrefix = `${this.input.isPreview ? 'preview-' : ''}${this.normalizedName}`;
+
+    const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'data.json'), 'utf-8'));
 
     this.libData = Object.assign({
       npmName: input.name,
@@ -66,23 +93,65 @@ export class PackageContext {
     }, data[this.normalizedName] || {});
   }
 
-  get normalizedName() {
-    return this.input.name.replace(/@/g, '').replace(/\//g, '-');
-  }
+  get npmVersion() {
+    if (this.prebuildVersion === -1) throw new Error('Prebuild version is not initialized');
 
-  get newNpmName() {
-    if (this.input.isPreview) return `@electron-prebuilds-preview/${this.normalizedName}`;
-
-    return `@electron-prebuilds/${this.normalizedName}`;
-  }
-
-  get githubAssetName() {
-    return `${this.normalizedName}-${this.input.version}`;
+    return `${this.input.version}-prebuild.${this.prebuildVersion}`;
   }
 
   get githubReleaseName() {
-    if (this.input.isPreview) return `preview-${this.normalizedName}-${this.newVersion}`;
+    return `${this.githubReleasePrefix}-${this.npmVersion}`;
+  }
 
-    return `${this.normalizedName}-${this.newVersion}`;
+  get isNan() {
+    if (!this.packageJSON) throw new Error('Package JSON is not initialized');
+
+    return !!this.packageJSON.dependencies.nan;
+  }
+
+  public clone() {
+    return new PackageContext(Object.assign({}, this.input));
+  }
+
+  public async init() {
+    if (this.input.version) {
+      this.prebuildVersion = await this.fetchPrebuildVersion();
+    }
+  }
+
+  public async initPackageJSON() {
+    this.packageJSON = JSON.parse(await fs.readFile(path.join(this.path, 'package.json'), 'utf-8'));
+  }
+
+  private async fetchPrebuildVersion() {
+    let lastRelease = 0;
+
+    try {
+      if (!npmShowCache.has(this.npmName)) {
+        const { stdout } = await $`npm show ${this.npmName} time --json`;
+
+        npmShowCache.set(this.npmName, stdout);
+      }
+
+      const result = JSON.parse(npmShowCache.get(this.npmName));
+
+      const versions = Object.keys(result)
+        .filter(k => k !== 'modified' && k !== 'created')
+        .filter(k => new RegExp(`^${this.input.version}-prebuild\\.\\d+$`).test(k))
+        .sort((a, b) => (result[a] > result[b] ? -1 : 1));
+
+      if (versions.length > 0) {
+        lastRelease = Number(versions[0].substring(this.input.version.length + '-prebuild.'.length));
+      }
+    } catch {} // eslint-disable-line no-empty
+
+    for (let i = lastRelease + 1; ; i += 1) {
+      const tag = `${this.githubReleasePrefix}-${this.input.version}-prebuild.${i}`;
+
+      // eslint-disable-next-line no-await-in-loop
+      if (!(await isReleaseExist(tag))) {
+        return i;
+      }
+    }
   }
 }

@@ -3,14 +3,6 @@ name: Build prebuilds for a package
 on:
   release:
     types: [created]
-  workflow_dispatch:
-    inputs:
-      package_name:
-        description: "Package name"
-        required: true
-      package_version:
-        description: "Package version"
-        required: true
 
 env:
   DRY_RUN: "false"

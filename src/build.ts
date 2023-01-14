@@ -5,33 +5,28 @@ import 'zx/globals';
 
 import { ELECTRON_VERSIONS, NODE_VERSIONS } from './defs.js';
 
-import type { PackageJson } from 'type-fest';
-
 import type { PackageContext } from './defs.js';
 
 export default async function build(ctx: PackageContext) {
-  cd(ctx.path);
+  if (!ctx.packageJSON.os || ctx.packageJSON.os.includes(process.platform)) {
+    cd(ctx.path);
 
-  const packageJSONPath = path.join(ctx.path, 'package.json');
-  const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
+    const archs = new Set<string>();
 
-  const archs = new Set<string>();
+    if (process.platform !== 'darwin') {
+      archs.add('x64');
+    } else if (ctx.libData.universal) {
+      archs.add('x64+arm64');
+    } else {
+      archs.add('x64');
+      archs.add('arm64');
+    }
 
-  if (process.platform !== 'darwin') {
-    archs.add('x64');
-  } else if (ctx.libData.universal) {
-    archs.add('x64+arm64');
-  } else {
-    archs.add('x64');
-    archs.add('arm64');
-  }
+    // TODO: enable later
+    // if (process.platform === 'linux') {
+    //   archs.add('arm64');
+    // }
 
-  // TODO: enable later
-  // if (process.platform === 'linux') {
-  //   archs.add('arm64');
-  // }
-
-  if (!packageJSON.os || packageJSON.os.includes(process.platform)) {
     if (await fs.pathExists(path.join(ctx.path, 'yarn.lock'))) {
       await $`yarn install --ignore-scripts`;
     } else {
@@ -46,6 +41,6 @@ export default async function build(ctx: PackageContext) {
       }
     }
   } else {
-    console.log('skipping build');
+    echo('skipping build');
   }
 }
