@@ -11,7 +11,7 @@ export default async function fetch(ctx: PackageContext) {
 
   const fileName = `${ctx.githubAssetName}.tgz`;
 
-  await $`npm pack ${ctx.input.name}@${ctx.input.version}`;
+  await $`npm pack ${ctx.libData.npmName}@${ctx.input.version}`;
 
   await tar.extract({ file: fileName });
 
