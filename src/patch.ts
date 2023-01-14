@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import 'zx/globals';
 
 import gypParser from 'gyp-parser';
@@ -124,11 +125,13 @@ async function patchGypFile(ctx: PackageContext) {
   const { targets } = gypfile;
 
   for (const target of targets) {
-    const conditions: any[] = target.conditions || [] as any;
-    target.conditions = conditions;
+    target.conditions = target.conditions || [] as any;
+
+    target.cflags_cc = target.cflags_cc || [];
+    target.cflags_cc.push('-std=c++20');
 
     if (ctx.libData.universal) {
-      conditions.push(
+      target.conditions.push(
         ['OS=="mac"', {
           xcode_settings: {
             OTHER_CFLAGS: [
@@ -144,7 +147,7 @@ async function patchGypFile(ctx: PackageContext) {
       );
     }
 
-    conditions.push(
+    target.conditions.push(
       ['OS=="mac"', {
         xcode_settings: {
           OTHER_CPLUSPLUSFLAGS: [
@@ -155,6 +158,18 @@ async function patchGypFile(ctx: PackageContext) {
             '-stdlib=libc++',
           ],
           MACOSX_DEPLOYMENT_TARGET: '10.7',
+        },
+      }],
+    );
+
+    target.conditions.push(
+      ['OS=="win"', {
+        msvs_settings: {
+          VCCLCompilerTool: {
+            AdditionalOptions: [
+              '/std:c++20',
+            ],
+          },
         },
       }],
     );

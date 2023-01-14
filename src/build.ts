@@ -15,19 +15,24 @@ export default async function build(ctx: PackageContext) {
   const packageJSONPath = path.join(ctx.path, 'package.json');
   const packageJSON: PackageJson = JSON.parse(await fs.readFile(packageJSONPath, 'utf-8'));
 
-  const archs = new Set(['x64']);
+  const archs = ['x64'];
 
-  if (process.platform === 'darwin') {
-    if (ctx.libData.universal) {
-      archs.delete('x64');
-      archs.add('x64+arm64');
-    } else {
-      archs.add('arm64');
-    }
+  if (process.platform !== 'darwin') {
+    archs.push('x64');
+  } else if (ctx.libData.universal) {
+    archs.push('x64+arm64');
+  } else if (process.arch === 'x64') {
+    archs.push('arm64');
+    archs.push('x64');
+  } else {
+    archs.push('x64');
+    archs.push('arm64');
   }
-  if (process.platform === 'linux') {
-    archs.add('arm64');
-  }
+
+  // TODO: enable later
+  // if (process.platform === 'linux') {
+  //   archs.push('arm64');
+  // }
 
   if (!packageJSON.os || packageJSON.os.includes(process.platform)) {
     if (await fs.pathExists(path.join(ctx.path, 'yarn.lock'))) {
