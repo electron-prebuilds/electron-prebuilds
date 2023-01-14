@@ -9,6 +9,9 @@ on:
         required: false
         default: false
 
+permissions:
+  contents: write
+
 jobs:
   scan:
     name: scan
